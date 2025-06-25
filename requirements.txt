@@ -1,4 +1,5 @@
 viennarna
+weasyprint
 Pillow
 IPython
 numpy
