@@ -2,15 +2,23 @@ FROM continuumio/miniconda3
 
 WORKDIR /app
 
-# Actualiza e instala dependencias del SO necesarias para Viennarna y Ghostscript
+# Instala dependencias del sistema necesarias para:
+# - Ghostscript
+# - WeasyPrint (libpango, libcairo, etc.)
+# - Imágenes (libjpeg, libpng)
 RUN apt-get update && apt-get install -y \
     ghostscript \
     build-essential \
     libglib2.0-0 \
     libpango1.0-0 \
-    libpangoft2-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
     libjpeg-dev \
     libpng-dev \
+    libgobject-2.0-0 \
+    shared-mime-info \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Añade canales conda
@@ -19,18 +27,18 @@ RUN conda config --add channels defaults && \
     conda config --add channels bioconda && \
     conda update -n base -c defaults conda -y
 
-# Instala viennarna, streamlit y demás paquetes Python
-RUN conda install viennarna streamlit -y
+# Instala ViennaRNA, Streamlit y dependencias base
+RUN conda install -y viennarna streamlit
 
-# Copia requirements y instala con pip
+# Instala dependencias Python adicionales
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el código de la app
+# Copia tu código
 COPY . .
 
-# Expone el puerto de Streamlit
+# Expone el puerto que usa Streamlit
 EXPOSE 8501
 
-# Comando para ejecutar la app
+# Comando para ejecutar la aplicación
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
