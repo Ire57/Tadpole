@@ -172,9 +172,9 @@ def png_to_data_uri(png_path: str) -> str:
     """
     Lee un fichero PNG y devuelve un data URI para incrustar en HTML.
     """
-    with open(png_path, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode("ascii")
-    return f"data:image/png;base64,{b64}"
+    # with open(png_path, "rb") as f:
+    #     b64 = base64.b64encode(f.read()).decode("ascii")
+    # return f"data:image/png;base64,{b64}"
 
 import matplotlib.pyplot as plt
 import os
