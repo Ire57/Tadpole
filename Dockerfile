@@ -1,21 +1,23 @@
-# Use miniconda base image
 FROM continuumio/miniconda3
 
-# Create a working directory
 WORKDIR /app
 
-# Copy your Python requirements file (make sure it’s in your repo)
+# Add conda-forge and bioconda channels for RNA tools
+RUN conda config --add channels defaults && \
+    conda config --add channels conda-forge && \
+    conda config --add channels bioconda && \
+    conda update -n base -c defaults conda -y
+
+# Install viennarna (latest available), streamlit, and python packages
+RUN conda install viennarna streamlit -y
+
+# Copy requirements and install the rest with pip
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install ViennaRNA and Streamlit using conda, plus other pip packages
-RUN conda install -c conda-forge viennarna=2.6.4 streamlit -y && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy all your app files into the container
+# Copy app code
 COPY . .
 
-# Expose the port Streamlit uses
 EXPOSE 8501
 
-# Run the Streamlit app
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
