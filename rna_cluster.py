@@ -265,20 +265,20 @@ def summary_image_per_group(output_base="rna_clusters"):
         grupo_id = group.replace("group_", "")
 
         # Construct the expected path for the representative's .fold file and its corresponding .png plot
-        rep_fold = os.path.join(rep_dir, f"rep_group_{grupo_id}.fold")
-        rep_png = rep_fold.replace(".fold", "_plot.png") # Assumes _plot.png naming convention from RNAplot
+        #rep_fold = os.path.join(rep_dir, f"rep_group_{grupo_id}.fold")
+        #rep_png = rep_fold.replace(".fold", "_plot.png") # Assumes _plot.png naming convention from RNAplot
 
-        if os.path.exists(rep_png):
-            # If the PNG exists, open it and save it as 'resumen.png' in the group's directory
-            im = Image.open(rep_png)
-            im.save(os.path.join(grupo_path, "summary.png"))
-        else:
-            # If the PNG is not found, as a fallback, copy the .fold file contents to a .txt file
-            if os.path.exists(rep_fold):
-                with open(rep_fold) as f:
-                    txt = f.read()
-                with open(os.path.join(grupo_path, "summary.txt"), "w") as f:
-                    f.write(txt)
+        #if os.path.exists(rep_png):
+        #    # If the PNG exists, open it and save it as 'resumen.png' in the group's directory
+        #    im = Image.open(rep_png)
+        #    im.save(os.path.join(grupo_path, "summary.png"))
+        #else:
+        #    # If the PNG is not found, as a fallback, copy the .fold file contents to a .txt file
+        #    if os.path.exists(rep_fold):
+        #        with open(rep_fold) as f:
+        #            txt = f.read()
+        #        with open(os.path.join(grupo_path, "summary.txt"), "w") as f:
+        #            f.write(txt)
 
 
 def compute_metrics(structures, tiempos):
@@ -331,4 +331,4 @@ def visualise_metrics(metrics):
     plt.title("Diversity of Structures") # Set plot title
     plt.ylabel("Quantity") # Set y-axis label
     plt.tight_layout() # Adjust plot parameters for a tight layout
-    plt.savefig("rna_clusters/diversity.png") # Save the plot to a file
+    #plt.savefig("rna_clusters/diversity.png") # Save the plot to a file
