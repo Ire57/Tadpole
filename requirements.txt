@@ -1,3 +1,4 @@
+viennarna
 Pillow
 IPython
 numpy
