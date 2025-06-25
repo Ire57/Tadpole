@@ -1,0 +1,10 @@
+streamlit
+Pillow
+IPython
+numpy
+scipy
+matplotlib
+weasyprint
+biopython
+scikit-learn
+RNA
