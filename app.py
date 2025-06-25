@@ -20,7 +20,6 @@ import time
 import matplotlib.pyplot as plt
 from io import StringIO
 from contextlib import redirect_stdout
-from weasyprint import HTML
 import tempfile
 import datetime
 from collections import defaultdict
