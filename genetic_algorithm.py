@@ -784,7 +784,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
             cluster_labels = labels
             
             #resumen_cluster = organise_per_clusters(msa_for_cluster, estructuras_for_cluster, labels, rmsd_matrix, output_base="rna_clusters_ga_result")
-            summary_image_per_group(output_base="rna_clusters_ga_result")
+            #summary_image_per_group(output_base="rna_clusters_ga_result")
 
             metricas = compute_metrics(estructuras_for_cluster, tiempos=[])
             visualise_metrics(metricas)
