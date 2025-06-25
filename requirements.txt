@@ -7,4 +7,3 @@ matplotlib
 weasyprint
 biopython
 scikit-learn
-RNA
