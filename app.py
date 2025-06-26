@@ -1210,7 +1210,7 @@ def linker_finder_tab():
             st.markdown("---")
             st.header("Candidate Linker Solutions")
 
-            if labels and len(set(labels)) > 1: # If clustering was performed and there's more than one cluster
+            if labels and len(set(list(labels))) > 1: # If clustering was performed and there's more than one cluster
                 st.subheader("Representative Linkers (by Cluster)")
                 cluster_dict = defaultdict(list)
                 for idx, label in enumerate(labels):
