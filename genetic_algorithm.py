@@ -781,7 +781,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
         #     best_overall_individual['image_paths'] = dict(img_paths)
         # log_func("--------------------------------------------------")
 
-        log_func(f"Saved images for linker: {res['linker']}")
+        #log_func(f"Saved images for linker: {res['linker']}")
 
         final_report_lines.append(f"\n### Genetic Algorithm Results ({len(all_final_results)} Valid Linker(s) Found)\n")
         
