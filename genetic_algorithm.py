@@ -546,8 +546,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                     rna3=best_overall_individual['rna3'],
                     mut1_info=best_overall_individual['rna1_mutations_info'],
                     mfe_1=mfe_1_diag,
-                    mfe_2=mfe_2_diag,
-                    folder_prefix='proposals')
+                    mfe_2=mfe_2_diag)
                 
                 log_func("--------------------------------------------------")
 
@@ -774,9 +773,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
                 rna3=res['rna3'], 
                 mut1_info=res['mut1_info'],
                 mfe_1=res['mfe_1'],
-                mfe_2=res['mfe_2'],
-                folder_prefix='propuestas' 
-            )
+                mfe_2=res['mfe_2'])
             log_func(f"Saved images for linker: {res['linker']}")
 
         final_report_lines.append(f"\n### Genetic Algorithm Results ({len(all_final_results)} Valid Linker(s) Found)\n")
