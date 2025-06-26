@@ -820,19 +820,19 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     else:
         log_func(f"❌ No valid linkers found by Genetic Algorithm for linker_length = {actual_linker_length_for_ga}.")
         final_report_lines.append("\nNo valid linkers were found during the Genetic Algorithm search.\n")
-    for res in all_final_results:
-            img_paths = save_and_plot_structures(
-                seq=res['sequence'],
-                structure_unconstr=res['structure_unconstrained'],
-                structure_constr=res['structure_constrained'],
-                rna1=res['rna1_mutated_seq'],
-                linker=res['linker'],
-                rna3=res['rna3'],
-                mut1_info=res['mut1_info'],
-                mfe_1=res['mfe_1'],
-                mfe_2=res['mfe_2']
-            )
-            res['image_paths'] = img_paths
-            log_func(f"Saved images for linker: {res['linker']}")
+    # for res in all_final_results:
+    #         img_paths = save_and_plot_structures(
+    #             seq=res['sequence'],
+    #             structure_unconstr=res['structure_unconstrained'],
+    #             structure_constr=res['structure_constrained'],
+    #             rna1=res['rna1_mutated_seq'],
+    #             linker=res['linker'],
+    #             rna3=res['rna3'],
+    #             mut1_info=res['mut1_info'],
+    #             mfe_1=res['mfe_1'],
+    #             mfe_2=res['mfe_2']
+    #         )
+    #         res['image_paths'] = img_paths
+    #         log_func(f"Saved images for linker: {res['linker']}")
 
     return all_final_results, "\n".join(final_report_lines), cluster_labels
