@@ -835,4 +835,4 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     #         res['image_paths'] = img_paths
     #         log_func(f"Saved images for linker: {res['linker']}")
 
-    return all_final_results, "\n".join(final_report_lines), cluster_labels
+    return all_final_results, "\n".join(final_report_lines), cluster_labels, best_overall_individual
