@@ -832,13 +832,13 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
         final_report_lines.append(f"\n### Genetic Algorithm Results ({len(all_final_results)} Valid Linker(s) Found)\n")
         
         # Add summary of all results to the report
-        for i, res in enumerate(all_final_results):
-            final_report_lines.append(f"**Result {i+1}:**\n")
-            final_report_lines.append(f"   Linker: {res['linker']}\n")
-            final_report_lines.append(f"   Fitness (MFE_ON - MFE_OFF): {res['fitness']:.2f}\n")
-            final_report_lines.append(f"   RNA1 Mutations: {res['mut1_info']}\n")
-            final_report_lines.append(f"   MFE OFF: {res['mfe_1']:.2f} kcal/mol, MFE ON: {res['mfe_2']:.2f} kcal/mol\n")
-            final_report_lines.append("---\n")
+        # for i, res in enumerate(all_final_results):
+        #     final_report_lines.append(f"**Result {i+1}:**\n")
+        #     final_report_lines.append(f"   Linker: {res['linker']}\n")
+        #     final_report_lines.append(f"   Fitness (MFE_ON - MFE_OFF): {res['fitness']:.2f}\n")
+        #     final_report_lines.append(f"   RNA1 Mutations: {res['mut1_info']}\n")
+        #     final_report_lines.append(f"   MFE OFF: {res['mfe_1']:.2f} kcal/mol, MFE ON: {res['mfe_2']:.2f} kcal/mol\n")
+        #     final_report_lines.append("---\n")
 
         # Call clustering and plotting functions from rna_cluster and io_tools
         if len(all_final_results) > 1:
