@@ -1187,7 +1187,7 @@ def linker_finder_tab():
             report = st.session_state["report"] # This is still the raw text log
             labels = st.session_state.get("cluster_labels", [])
     
-            mutable_set = [int(x.strip()) for x in mutable_rna1_str.split(",") if x.strip().isdigit()]
+            mutable_set = [int(x.strip()) for x in mutable_rna1.split(",") if x.strip().isdigit()]
             watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
             linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
 
