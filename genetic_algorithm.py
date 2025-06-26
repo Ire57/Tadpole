@@ -537,7 +537,17 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 mfe_diff_for_diag = mfe_2_diag - mfe_1_diag
                 log_func(f"✅ MFE difference (MFE_ON - MFE_OFF): {mfe_diff_for_diag:.2f} (Required: > {mfe_delta})")
                 log_func("--------------------------------------------------\n")
-
+                save_and_plot_structures(
+                    seq=seq_diag,
+                    structure_unconstr=struct_full_diag,
+                    structure_constr=struct_constr_diag,
+                    rna1=best_overall_individual['rna1_mutated'],
+                    linker=best_overall_individual['linker'],
+                    rna3=best_overall_individual['rna3'],
+                    mut1_info=best_overall_individual['rna1_mutations_info'],
+                    mfe_1=mfe_1_diag,
+                    mfe_2=mfe_2_diag,
+                    folder_prefix='proposals'
                 
                 log_func("--------------------------------------------------")
 
@@ -755,7 +765,18 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
 
             rna1_mutated_segment = res['sequence'][0:len(rna1)] 
 
-            
+            save_and_plot_structures(
+                seq=res['sequence'],
+                structure_unconstr=res['structure_unconstrained'],
+                structure_constr=res['structure_constrained'],
+                rna1=rna1_mutated_segment, 
+                linker=res['linker'],
+                rna3=res['rna3'], 
+                mut1_info=res['mut1_info'],
+                mfe_1=res['mfe_1'],
+                mfe_2=res['mfe_2'],
+                folder_prefix='propuestas' 
+            )
             log_func(f"Saved images for linker: {res['linker']}")
 
         final_report_lines.append(f"\n### Genetic Algorithm Results ({len(all_final_results)} Valid Linker(s) Found)\n")
