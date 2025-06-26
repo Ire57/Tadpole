@@ -1331,28 +1331,28 @@ def linker_finder_tab():
                 current_linker_min_for_report = linker_length_for_ga
                 current_linker_max_for_report = linker_length_for_ga # Fixed length
 
-            # This is where you generate your rich HTML report
-            html = construir_html_reporte_completo(
-                results=st.session_state["results"],
-                report=st.session_state["report"], # Passing the raw log to be included in the HTML report
-                rna1=current_rna1_for_report,
-                rna3=rna3,
-                struct1=struct1,
-                constraint=constraint,
-                mutable_rna1=mutable_set,
-                watched_positions=watched_positions,
-                use_mutaciones=use_mutaciones,
-                mfe_delta=mfe_delta,
-                max_pairings=max_pairings,
-                max_changes=max_changes,
-                num_mut=current_num_mut_for_report,
-                linker_min=current_linker_min_for_report,
-                linker_max=current_linker_max_for_report,
-                verbose=verbose,
-                cluster_labels=st.session_state["cluster_labels"],
-                representative_img_bases=representative_img_bases, # This might need adjusting if your HTML report needs actual image paths
-                search_method=search_method # Now included
-            )
+            # # This is where you generate your rich HTML report
+            # html = construir_html_reporte_completo(
+            #     results=st.session_state["results"],
+            #     report=st.session_state["report"], # Passing the raw log to be included in the HTML report
+            #     rna1=current_rna1_for_report,
+            #     rna3=rna3,
+            #     struct1=struct1,
+            #     constraint=constraint,
+            #     mutable_rna1=mutable_set,
+            #     watched_positions=watched_positions,
+            #     use_mutaciones=use_mutaciones,
+            #     mfe_delta=mfe_delta,
+            #     max_pairings=max_pairings,
+            #     max_changes=max_changes,
+            #     num_mut=current_num_mut_for_report,
+            #     linker_min=current_linker_min_for_report,
+            #     linker_max=current_linker_max_for_report,
+            #     verbose=verbose,
+            #     cluster_labels=st.session_state["cluster_labels"],
+            #     representative_img_bases=representative_img_bases, # This might need adjusting if your HTML report needs actual image paths
+            #     search_method=search_method # Now included
+            # )
 # ---------------- TABS PRINCIPALES ----------------
 tabs = st.tabs([" Linker Finder", " MSA-Based Analyses"])
 
