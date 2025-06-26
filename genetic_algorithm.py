@@ -761,25 +761,25 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
         # Sort results by fitness (higher is better) if desired
         all_final_results.sort(key=lambda x: x['fitness'], reverse=True)
 
-        # ---: Save images for EVERY valid linker found ---
-        log_func("\nSaving images for all valid linkers found by GA...")
-        for i, res in enumerate(all_final_results):
+        # # ---: Save images for EVERY valid linker found ---
+        # log_func("\nSaving images for all valid linkers found by GA...")
+        # for i, res in enumerate(all_final_results):
 
-            rna1_mutated_segment = res['sequence'][0:len(rna1)] 
+        #     rna1_mutated_segment = res['sequence'][0:len(rna1)] 
 
-            img_paths = save_and_plot_structures(
-                    seq=seq_diag,
-                    structure_unconstr=struct_full_diag,
-                    structure_constr=struct_constr_diag,
-                    rna1=best_overall_individual['rna1_mutated'],
-                    linker=best_overall_individual['linker'],
-                    rna3=best_overall_individual['rna3'],
-                    mut1_info=best_overall_individual['rna1_mutations_info'],
-                    mfe_1=mfe_1_diag,
-                    mfe_2=mfe_2_diag)
+        #     img_paths = save_and_plot_structures(
+        #             seq=res['sequence'],
+        #             structure_unconstr=res['struct_unconstr'],
+        #             structure_constr=res['struct_constr'],
+        #             rna1=best_overall_individual['rna1_mutated'],
+        #             linker=best_overall_individual['linker'],
+        #             rna3=best_overall_individual['rna3'],
+        #             mut1_info=best_overall_individual['rna1_mutations_info'],
+        #             mfe_1=mfe_1_diag,
+        #             mfe_2=mfe_2_diag)
 
-            best_overall_individual['image_paths'] = dict(img_paths)
-        log_func("--------------------------------------------------")
+        #     best_overall_individual['image_paths'] = dict(img_paths)
+        # log_func("--------------------------------------------------")
 
         log_func(f"Saved images for linker: {res['linker']}")
 
