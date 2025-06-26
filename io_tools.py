@@ -1,6 +1,7 @@
 import os
 from PIL import Image
 from IPython.display import display
+import shutil
 
 import os
 import io
@@ -37,7 +38,7 @@ def save_and_plot_structures(seq, structure_unconstr, structure_constr,
         png_file = f"{folder}/{linker}_{tag}_plot.png"
 
         if os.path.exists("rna.ps"):
-            os.rename("rna.ps", ps_file)
+            shutil.movee("rna.ps", ps_file)
             os.system(f"gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha -r150 "
                       f"-dEPSCrop -sOutputFile={png_file} {ps_file}")
 
