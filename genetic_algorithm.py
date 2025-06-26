@@ -778,7 +778,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
                     mfe_1=mfe_1_diag,
                     mfe_2=mfe_2_diag)
 
-                    best_overall_individual['image_paths'] = dict(img_paths)
+            best_overall_individual['image_paths'] = dict(img_paths)
         log_func("--------------------------------------------------")
 
         log_func(f"Saved images for linker: {res['linker']}")
