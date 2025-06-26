@@ -1182,178 +1182,177 @@ def linker_finder_tab():
                 st.text(report)
 
         # Mostrar resultados si existen
-if "results" in st.session_state and st.session_state["results"]:
-    results = st.session_state["results"]
-    report = st.session_state["report"] # This is still the raw text log
-    labels = st.session_state.get("cluster_labels", [])
+        if "results" in st.session_state and st.session_state["results"]:
+            results = st.session_state["results"]
+            report = st.session_state["report"] # This is still the raw text log
+            labels = st.session_state.get("cluster_labels", [])
     
-    mutable_set = [int(x.strip()) for x in mutable_rna1_str.split(",") if x.strip().isdigit()]
-    watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
-    linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
+            mutable_set = [int(x.strip()) for x in mutable_rna1_str.split(",") if x.strip().isdigit()]
+            watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
+            linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
 
-    # These plotting functions are designed for multiple results.
-    # For GA, they will receive a list with one item.
-    img_path = plot_delta_mfe(results)
-    # Pass the correct RNA1 sequence (mutated for GA) to plot_pairings_histogram if it uses it.
-    rna1_for_plotting = results[0].get('rna1_mutated_seq', rna1) if search_method == "Genetic Algorithm" and results else rna1
-    img_pairings = plot_pairings_histogram(results, rna1_for_plotting, rna3)
+            # These plotting functions are designed for multiple results.
+            # For GA, they will receive a list with one item.
+            img_path = plot_delta_mfe(results)
+            # Pass the correct RNA1 sequence (mutated for GA) to plot_pairings_histogram if it uses it.
+            rna1_for_plotting = results[0].get('rna1_mutated_seq', rna1) if search_method == "Genetic Algorithm" and results else rna1
+            img_pairings = plot_pairings_histogram(results, rna1_for_plotting, rna3)
     
-    st.success(f"✅ {len(results)} valid linkers found.")
+            st.success(f"✅ {len(results)} valid linkers found.")
 
-    # --- Display overall plots if they generated paths ---
-    if img_path and os.path.exists(img_path):
-        st.image(img_path, caption="Delta MFE Distribution")
-    if img_pairings and os.path.exists(img_pairings):
-        st.image(img_pairings, caption="RNA1-RNA3 Pairings Histogram")
-    # ----------------------------------------------------
+            # --- Display overall plots if they generated paths ---
+            if img_path and os.path.exists(img_path):
+                st.image(img_path, caption="Delta MFE Distribution")
+            if img_pairings and os.path.exists(img_pairings):
+                st.image(img_pairings, caption="RNA1-RNA3 Pairings Histogram")
+            # ----------------------------------------------------
 
-    st.markdown("---")
-    st.header("Candidate Linker Solutions")
+            st.markdown("---")
+            st.header("Candidate Linker Solutions")
 
-    if labels and len(set(labels)) > 1: # If clustering was performed and there's more than one cluster
-        st.subheader("Representative Linkers (by Cluster)")
-        cluster_dict = defaultdict(list)
-        for idx, label in enumerate(labels):
-            cluster_dict[label].append((idx, results[idx]))
+            if labels and len(set(labels)) > 1: # If clustering was performed and there's more than one cluster
+                st.subheader("Representative Linkers (by Cluster)")
+                cluster_dict = defaultdict(list)
+                for idx, label in enumerate(labels):
+                    cluster_dict[label].append((idx, results[idx]))
 
-        for cluster_id, cluster_items in sorted(cluster_dict.items()):
-            if cluster_id == -1: # Noise cluster
-                st.markdown(f"## Noise Cluster ({len(cluster_items)} sequences)")
-            else:
-                st.markdown(f"## Cluster {cluster_id} ({len(cluster_items)} sequences)")
-
-            # Choose representative: e.g., the one with the best constrained MFE
-            representative = min(cluster_items, key=lambda x: x[1]['mfe_2']) # menor es mejor
-            idx, res = representative[0], representative[1] # Unpack idx and result dict
-
-            with st.expander(f" Representative Linker (#{idx + 1}): {res['linker']} (Cluster {cluster_id})"):
-                st.markdown(f"**Sequence:** `{res['sequence']}`")
-                st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
-                st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
-                st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
-                st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
-                if res.get("mut1_info"):
-                    st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
-
-                # >>> CORRECTED: Display images using the paths stored in 'image_paths' <<<
-                image_paths = res.get('image_paths', {}) # Safely get the dictionary of paths
-                if image_paths:
-                    if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
-                        st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
+                for cluster_id, cluster_items in sorted(cluster_dict.items()):
+                    if cluster_id == -1: # Noise cluster
+                        st.markdown(f"## Noise Cluster ({len(cluster_items)} sequences)")
                     else:
-                        st.warning(f"Unconstrained image not found for Rep. Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
+                        st.markdown(f"## Cluster {cluster_id} ({len(cluster_items)} sequences)")
+
+                    # Choose representative: e.g., the one with the best constrained MFE
+                    representative = min(cluster_items, key=lambda x: x[1]['mfe_2']) # menor es mejor
+                    idx, res = representative[0], representative[1] # Unpack idx and result dict
+
+                    with st.expander(f" Representative Linker (#{idx + 1}): {res['linker']} (Cluster {cluster_id})"):
+                        st.markdown(f"**Sequence:** `{res['sequence']}`")
+                        st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
+                        st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
+                        st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
+                        st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
+                        if res.get("mut1_info"):
+                            st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
+
+                        image_paths = res.get('image_paths', {}) # Safely get the dictionary of paths
+                        if image_paths:
+                            if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
+                                st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Unconstrained image not found for Rep. Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
                     
-                    if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
-                        st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
-                    else:
-                        st.warning(f"Constrained image not found for Rep. Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
-                else:
-                    st.info(f"No image paths stored for Representative Linker {res['linker']}.")
-    else: # No clustering or only one result/cluster (or all in noise)
-        st.subheader("Best Candidate Linker (No Clustering)")
-        if results:
-            res = results[0] # Assuming results are sorted by fitness, so first is best
-            with st.expander(f" Top Linker: {res['linker']}"):
-                st.markdown(f"**Sequence:** `{res['sequence']}`")
-                st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
-                st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
-                st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
-                st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
-                if res.get("mut1_info"):
-                    st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
+                            if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
+                                st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Constrained image not found for Rep. Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
+                        else:
+                            st.info(f"No image paths stored for Representative Linker {res['linker']}.")
+            else: # No clustering or only one result/cluster (or all in noise)
+                st.subheader("Best Candidate Linker (No Clustering)")
+                if results:
+                    res = results[0] # Assuming results are sorted by fitness, so first is best
+                    with st.expander(f" Top Linker: {res['linker']}"):
+                        st.markdown(f"**Sequence:** `{res['sequence']}`")
+                        st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
+                        st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
+                        st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
+                        st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
+                        if res.get("mut1_info"):
+                            st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
 
-                # >>> Display images for the best linker <<<
-                image_paths = res.get('image_paths', {})
-                if image_paths:
-                    if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
-                        st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
-                    else:
-                        st.warning(f"Unconstrained image not found for Best Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
-                    if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
-                        st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
-                    else:
-                        st.warning(f"Constrained image not found for Best Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
-                else:
-                    st.info(f"No image paths stored for Best Linker {res['linker']}.")
+                        # >>> Display images for the best linker <<<
+                        image_paths = res.get('image_paths', {})
+                        if image_paths:
+                            if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
+                                st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Unconstrained image not found for Best Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
+                            if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
+                                st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Constrained image not found for Best Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
+                        else:
+                            st.info(f"No image paths stored for Best Linker {res['linker']}.")
 
-    # --- Dendrogram (moved here for better flow after main candidate display) ---
-    if labels and len(set(labels)) > 1: # Only plot if clustering actually happened and there's more than one cluster
-        plot_structure_dendrogram(results) # This might not be meaningful for a single GA result
-    # -------------------------------------------------------------------------
+            # --- Dendrogram (moved here for better flow after main candidate display) ---
+            if labels and len(set(labels)) > 1: # Only plot if clustering actually happened and there's more than one cluster
+                plot_structure_dendrogram(results) # This might not be meaningful for a single GA result
+            # -------------------------------------------------------------------------
 
-    st.markdown("---")
-    show_all = st.checkbox("Show all linkers")
-    if show_all:
-        st.subheader("All Valid Linkers Found")
-        for idx, res in enumerate(results): # Iterate through ALL results
-            linker_name_for_expander = res.get('linker', f"Linker {idx + 1}")
-            with st.expander(f" Linker {idx + 1}: {linker_name_for_expander} (Fitness: {res.get('fitness', 'N/A'):.2f})"):
-                st.markdown(f"**Sequence:** `{res['sequence']}`")
-                st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
-                st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
-                st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
-                st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
-                if res.get("mut1_info"):
-                    st.markdown(f"**Mutations on RNA1:** {res['mut1_info']}")
+            st.markdown("---")
+            show_all = st.checkbox("Show all linkers")
+            if show_all:
+                st.subheader("All Valid Linkers Found")
+                for idx, res in enumerate(results): # Iterate through ALL results
+                    linker_name_for_expander = res.get('linker', f"Linker {idx + 1}")
+                    with st.expander(f" Linker {idx + 1}: {linker_name_for_expander} (Fitness: {res.get('fitness', 'N/A'):.2f})"):
+                        st.markdown(f"**Sequence:** `{res['sequence']}`")
+                        st.markdown(f"**Unconstrained structure:** `{res['structure_unconstrained']}`")
+                        st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
+                        st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
+                        st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
+                        if res.get("mut1_info"):
+                            st.markdown(f"**Mutations on RNA1:** {res['mut1_info']}")
 
-                # >>> Display images using the paths stored in 'image_paths' for EACH linker <<<
-                image_paths = res.get('image_paths', {}) # Get the dictionary of paths for this linker
+                        # >>> Display images using the paths stored in 'image_paths' for EACH linker <<<
+                        image_paths = res.get('image_paths', {}) # Get the dictionary of paths for this linker
                 
-                if image_paths: # Check if the dictionary is not empty
-                    if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
-                        st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
-                    else:
-                        st.warning(f"Unconstrained image not found for Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
+                        if image_paths: # Check if the dictionary is not empty
+                            if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
+                                st.image(image_paths['unconstrained'], caption=f"Unconstrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Unconstrained image not found for Linker {res['linker']}: {image_paths.get('unconstrained', 'N/A')}")
                     
-                    if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
-                        st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
-                    else:
-                        st.warning(f"Constrained image not found for Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
-                else:
-                    st.info(f"No image paths stored for Linker {res['linker']}. Images might not have been generated or stored correctly.")
+                            if 'constrained' in image_paths and os.path.exists(image_paths['constrained']):
+                                st.image(image_paths['constrained'], caption=f"Constrained Structure for Linker {res['linker']}")
+                            else:
+                                st.warning(f"Constrained image not found for Linker {res['linker']}: {image_paths.get('constrained', 'N/A')}")
+                        else:
+                            st.info(f"No image paths stored for Linker {res['linker']}. Images might not have been generated or stored correctly.")
 
-    st.markdown("### 📝 Full Search Report:")
-    st.text(report) # Display the full report text generated by the search function
+            st.markdown("### 📝 Full Search Report:")
+            st.text(report) # Display the full report text generated by the search function
 
 
-    # Adjust parameters for HTML report based on search method
-    current_rna1_for_report = rna1.strip()
-    current_num_mut_for_report = num_mut
-    current_linker_min_for_report = linker_min
-    current_linker_max_for_report = linker_max
+            # Adjust parameters for HTML report based on search method
+            current_rna1_for_report = rna1.strip()
+            current_num_mut_for_report = num_mut
+            current_linker_min_for_report = linker_min
+            current_linker_max_for_report = linker_max
     
-    if search_method == "Genetic Algorithm" and results:
-        # Try to get the mutated RNA1 sequence from results.
-        # If 'rna1_mutated_seq' is not present, it will fallback to the original 'rna1' sequence.
-        current_rna1_for_report = results[0].get('rna1_mutated_seq', rna1)
-        # For GA, num_mut is implicitly handled by GA's internal mutation logic,
-        # but we can pass 0 or a placeholder as max mutations for RNA1 as per GA parameters
-        current_num_mut_for_report = f"GA (Rate: {ga_mutation_rate_rna1})"
-        current_linker_min_for_report = linker_length_for_ga
-        current_linker_max_for_report = linker_length_for_ga # Fixed length
+            if search_method == "Genetic Algorithm" and results:
+                # Try to get the mutated RNA1 sequence from results.
+                # If 'rna1_mutated_seq' is not present, it will fallback to the original 'rna1' sequence.
+                current_rna1_for_report = results[0].get('rna1_mutated_seq', rna1)
+                # For GA, num_mut is implicitly handled by GA's internal mutation logic,
+                # but we can pass 0 or a placeholder as max mutations for RNA1 as per GA parameters
+                current_num_mut_for_report = f"GA (Rate: {ga_mutation_rate_rna1})"
+                current_linker_min_for_report = linker_length_for_ga
+                current_linker_max_for_report = linker_length_for_ga # Fixed length
 
-    # This is where you generate your rich HTML report
-    html = construir_html_reporte_completo(
-        results=st.session_state["results"],
-        report=st.session_state["report"], # Passing the raw log to be included in the HTML report
-        rna1=current_rna1_for_report,
-        rna3=rna3,
-        struct1=struct1,
-        constraint=constraint,
-        mutable_rna1=mutable_set,
-        watched_positions=watched_positions,
-        use_mutaciones=use_mutaciones,
-        mfe_delta=mfe_delta,
-        max_pairings=max_pairings,
-        max_changes=max_changes,
-        num_mut=current_num_mut_for_report,
-        linker_min=current_linker_min_for_report,
-        linker_max=current_linker_max_for_report,
-        verbose=verbose,
-        cluster_labels=st.session_state["cluster_labels"],
-        representative_img_bases=representative_img_bases, # This might need adjusting if your HTML report needs actual image paths
-        search_method=search_method # Now included
-    )
+            # This is where you generate your rich HTML report
+            html = construir_html_reporte_completo(
+                results=st.session_state["results"],
+                report=st.session_state["report"], # Passing the raw log to be included in the HTML report
+                rna1=current_rna1_for_report,
+                rna3=rna3,
+                struct1=struct1,
+                constraint=constraint,
+                mutable_rna1=mutable_set,
+                watched_positions=watched_positions,
+                use_mutaciones=use_mutaciones,
+                mfe_delta=mfe_delta,
+                max_pairings=max_pairings,
+                max_changes=max_changes,
+                num_mut=current_num_mut_for_report,
+                linker_min=current_linker_min_for_report,
+                linker_max=current_linker_max_for_report,
+                verbose=verbose,
+                cluster_labels=st.session_state["cluster_labels"],
+                representative_img_bases=representative_img_bases, # This might need adjusting if your HTML report needs actual image paths
+                search_method=search_method # Now included
+            )
 # ---------------- TABS PRINCIPALES ----------------
 tabs = st.tabs([" Linker Finder", " MSA-Based Analyses"])
 
