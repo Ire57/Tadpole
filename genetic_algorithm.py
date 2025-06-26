@@ -662,8 +662,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
             rna3=sol['individual']['rna3'], # Asumiendo que rna3 es constante o se accede desde 'individual'
             mut1_info=sol['individual']['rna1_mutations_info'],
             mfe_1=sol['mfe_1'],
-            mfe_2=sol['mfe_2'],
-            folder_prefix='final_results' # Nuevo prefijo para los resultados finales
+            mfe_2=sol['mfe_2']
         )
 
     return final_solutions_to_return
