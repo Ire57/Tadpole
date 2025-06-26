@@ -202,9 +202,9 @@ def plot_pairings_histogram(results, rna1, rna3, output_dir="report_images", bin
 
     plt.figure(figsize=(6,4))
     plt.hist(counts, bins=bins, edgecolor='black')
-    plt.xlabel("Número de emparejamientos RNA1–RNA3")
-    plt.ylabel("Número de diseños")
-    plt.title("Distribución de emparejamientos entre RNA1 y RNA3")
+    plt.xlabel("Number of pairings RNA1–RNA3")
+    plt.ylabel("Number of designs")
+    plt.title("Pairing distributions between RNA1 & RNA3")
     plt.tight_layout()
     plt.savefig(out_path, dpi=150)
     plt.close()
