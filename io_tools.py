@@ -1,29 +1,38 @@
 import os
-from PIL import Image
-from IPython.display import display
 import shutil
-
-import os
-import io
+import tempfile
 from PIL import Image
-import streamlit as st
 
 def save_and_plot_structures(seq, structure_unconstr, structure_constr,
-                             rna1, linker, rna3, mut1_info, mfe_1, mfe_2,
-                             folder_prefix="/tmp/propuestas"):  # Carpeta temporal
-
+                             rna1, linker, rna3, mut1_info, mfe_1, mfe_2):
+    """
+    Igual que antes, pero:
+    - Usa carpeta temporal
+    - Devuelve lista de rutas a imágenes generadas
+    """
     linker_len = len(linker)
     full_len = len(seq)
     rna1_len = len(rna1)
 
-    folder = f"{folder_prefix}/linker_{linker_len}"
-    os.makedirs(folder, exist_ok=True)
+    folder = tempfile.mkdtemp(prefix=f"linker_{linker_len}_")
+
+    generated_images = []
 
     for tag, structure, mfe in [
         ("unconstrained", structure_unconstr, mfe_1),
         ("constrained", structure_constr, mfe_2)
     ]:
-        fold_file = f"{folder}/{linker}_{tag}.fold"
+        # Guardar info
+        filename = os.path.join(folder, f"result_{linker}_{tag}.txt")
+        with open(filename, "w") as f:
+            f.write(f"Linker = {linker_len}\n")
+            f.write(f"Mutaciones RNA1: {mut1_info}\n")
+            f.write(f"mfe = {mfe:.2f}\n")
+            f.write(structure + "\n")
+            f.write(seq + "\n")
+
+        # Input para RNAplot
+        fold_file = os.path.join(folder, f"{linker}_{tag}.fold")
         with open(fold_file, "w") as f:
             f.write(seq + "\n")
             f.write(structure + "\n")
@@ -32,24 +41,19 @@ def save_and_plot_structures(seq, structure_unconstr, structure_constr,
                       f"{rna1_len+1} {rna1_len+linker_len} 10 RED omark " \
                       f"{rna1_len+linker_len+1} {full_len} 10 BLUE omark"
 
+        # Ejecutar RNAplot
         os.system(f'RNAplot --pre "{pre_command}" < {fold_file}')
 
-        ps_file = f"{folder}/{linker}_{tag}_plot.ps"
-        png_file = f"{folder}/{linker}_{tag}_plot.png"
+        # Mover rna.ps a destino
+        ps_file = os.path.join(folder, f"{linker}_{tag}_plot.ps")
+        png_file = os.path.join(folder, f"{linker}_{tag}_plot.png")
 
         if os.path.exists("rna.ps"):
-            shutil.movee("rna.ps", ps_file)
-            os.system(f"gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha -r150 "
-                      f"-dEPSCrop -sOutputFile={png_file} {ps_file}")
-
+            shutil.move("rna.ps", ps_file)
+            os.system(f"gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pngalpha -r150 -dEPSCrop -sOutputFile={png_file} {ps_file}")
             if os.path.exists(png_file):
-                # Abrir la imagen en memoria y mostrarla con Streamlit
-                with open(png_file, "rb") as img_file:
-                    img_bytes = img_file.read()
-                st.image(img_bytes, caption=f"{tag} structure")
-
-                # Opcional: borrar archivos temporales
-                os.remove(ps_file)
-                os.remove(png_file)
+                generated_images.append((tag, png_file))
         else:
-            st.warning(f"No output from RNAplot for {tag} structure.")
+            print(f"[WARN] No se generó 'rna.ps' para {tag}")
+
+    return generated_images
