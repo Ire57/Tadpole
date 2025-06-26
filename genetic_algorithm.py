@@ -547,7 +547,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                     mut1_info=best_overall_individual['rna1_mutations_info'],
                     mfe_1=mfe_1_diag,
                     mfe_2=mfe_2_diag,
-                    folder_prefix='proposals'
+                    folder_prefix='proposals')
                 
                 log_func("--------------------------------------------------")
 
