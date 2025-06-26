@@ -536,22 +536,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
 
                 mfe_diff_for_diag = mfe_2_diag - mfe_1_diag
                 log_func(f"✅ MFE difference (MFE_ON - MFE_OFF): {mfe_diff_for_diag:.2f} (Required: > {mfe_delta})")
-                log_func("--------------------------------------------------\n")
-                img_paths = save_and_plot_structures(
-                    seq=seq_diag,
-                    structure_unconstr=struct_full_diag,
-                    structure_constr=struct_constr_diag,
-                    rna1=best_overall_individual['rna1_mutated'],
-                    linker=best_overall_individual['linker'],
-                    rna3=best_overall_individual['rna3'],
-                    mut1_info=best_overall_individual['rna1_mutations_info'],
-                    mfe_1=mfe_1_diag,
-                    mfe_2=mfe_2_diag)
-
-                best_overall_individual['image_paths'] = dict(img_paths)
-                log_func("✅ Images saved for best individual")
-                log_func("--------------------------------------------------")
-
+                
 
         # Elitism selection
         num_elite = int(population_size * elitism_rate)
@@ -603,6 +588,17 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
             struct_unconstr_final, mfe_1_final = RNA.fold(seq_full_final)
             struct_constr_final, mfe_2_final = constrained_mfe(seq_full_final, constraint_orig)
 
+            final_solution_img_paths = save_and_plot_structures(
+                seq=seq_full_final,
+                structure_unconstr=struct_unconstr_final,
+                structure_constr=struct_constr_final,
+                rna1=ind['rna1_mutated'],
+                linker=ind['linker'],
+                rna3=ind['rna3'],
+                mut1_info=ind['rna1_mutations_info'],
+                mfe_1=mfe_1_final,
+                mfe_2=mfe_2_final
+            )
             final_valid_solutions.append({
                 'individual': ind,
                 'fitness': fit,
@@ -611,9 +607,12 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 'mfe_1': mfe_1_final,
                 'struct_constr': struct_constr_final,
                 'mfe_2': mfe_2_final
+                'image_paths': final_solution_img_paths # <--- HERE ARE THE IMAGE PATHS FOR THIS LINKER!
+            
             })
+            
             log_func(f"Valid solution found: Linker={ind['linker']}, Fitness={fit:.2f}")
-
+            
     if verbose:
         log_func("\nGenetic Algorithm Finished.")
         log_func(f"Total valid solutions found in final population: {len(final_valid_solutions)}")
