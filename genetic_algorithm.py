@@ -755,7 +755,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
                 'fitness': float(sol['fitness']),
                 # Add rna1_mutated_seq for plotting/reporting if needed by outer functions
                 'rna1_mutated_seq': sol['seq_full'][0:rna1_part_len],
-                'rna3': ind['rna3'] # Ensure rna3 is in the result for plotting functions
+                'rna3': ind['rna3'], # Ensure rna3 is in the result for plotting functions
                 'image_paths': sol['image_paths'] 
             })
         # Sort results by fitness (higher is better) if desired
