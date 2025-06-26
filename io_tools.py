@@ -56,4 +56,5 @@ def save_and_plot_structures(seq, structure_unconstr, structure_constr,
         else:
             print(f"[WARN] No se generó 'rna.ps' para {tag}")
 
-    return generated_images
+    return {tag: path for tag, path in generated_images}
+
