@@ -607,7 +607,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 'mfe_1': mfe_1_final,
                 'struct_constr': struct_constr_final,
                 'mfe_2': mfe_2_final
-                'image_paths': final_solution_img_paths # <--- HERE ARE THE IMAGE PATHS FOR THIS LINKER!
+                'image_paths': final_solution_img_paths 
             
             })
             
