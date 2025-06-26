@@ -1304,18 +1304,17 @@ def linker_finder_tab():
                         st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
                         if res.get("mut1_info"):
                             st.markdown(f"**Mutations on RNA1:** {res['mut1_info']}")
-                        
-                        linker_for_img = res['linker']
-                        linker_len_for_img = len(linker_for_img)
-                        folder = f"propuestas/linker_{linker_len_for_img}"
-                        
-                        unconstrained_image_path = f"{folder}/{linker_for_img}_unconstrained_plot.png"
-                        constrained_image_path = f"{folder}/{linker_for_img}_constrained_plot.png"
-                        
-                        if os.path.exists(unconstrained_image_path):
-                            st.image(unconstrained_image_path, caption=f"Unconstrained Structure for Linker {linker_for_img}")
-                        if os.path.exists(constrained_image_path):
-                            st.image(constrained_image_path, caption=f"Constrained Structure for Linker {linker_for_img}")
+            
+                        # Mostrar imágenes usando las rutas guardadas en 'image_paths'
+                        image_paths = res.get('image_paths', {})
+            
+                        unconstrained_image_path = image_paths.get('unconstrained')
+                        constrained_image_path = image_paths.get('constrained')
+            
+                        if unconstrained_image_path and os.path.exists(unconstrained_image_path):
+                            st.image(unconstrained_image_path, caption=f"Unconstrained Structure for Linker {res['linker']}")
+                        if constrained_image_path and os.path.exists(constrained_image_path):
+                            st.image(constrained_image_path, caption=f"Constrained Structure for Linker {res['linker']}")
 
 
 
