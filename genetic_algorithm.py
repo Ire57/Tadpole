@@ -767,7 +767,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
 
             rna1_mutated_segment = res['sequence'][0:len(rna1)] 
 
-           img_paths = save_and_plot_structures(
+            img_paths = save_and_plot_structures(
                     seq=seq_diag,
                     structure_unconstr=struct_full_diag,
                     structure_constr=struct_constr_diag,
