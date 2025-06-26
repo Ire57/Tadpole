@@ -1187,27 +1187,6 @@ if "results" in st.session_state and st.session_state["results"]:
     report = st.session_state["report"] # This is still the raw text log
     labels = st.session_state.get("cluster_labels", [])
     
-    # Ensure these variables are defined in your Streamlit app setup (sidebar/inputs)
-    # For this snippet, assuming they are accessible
-    # Example placeholders if not defined globally in your app.py:
-    # rna1 = st.session_state.get("rna1_input", "")
-    # rna3 = st.session_state.get("rna3_input", "")
-    # mutable_rna1_str = st.session_state.get("mutable_rna1_input", "")
-    # watched_positions_str = st.session_state.get("watched_positions_input", "")
-    # linker_min = st.session_state.get("linker_min_input", 5)
-    # linker_max = st.session_state.get("linker_max_input", 10)
-    # search_method = st.session_state.get("search_method_selected", "")
-    # linker_length_for_ga = st.session_state.get("ga_linker_length_input", 7) # Example GA specific
-    # ga_mutation_rate_rna1 = st.session_state.get("ga_mutation_rate_rna1_input", 0.02) # Example GA specific
-    # struct1 = st.session_state.get("struct1_input", "")
-    # constraint = st.session_state.get("constraint_input", "")
-    # use_mutaciones = st.session_state.get("use_mutaciones_input", False)
-    # mfe_delta = st.session_state.get("mfe_delta_input", 0)
-    # max_pairings = st.session_state.get("max_pairings_input", 5)
-    # max_changes = st.session_state.get("max_changes_input", 6)
-    # num_mut = st.session_state.get("num_mut_input", 0)
-    # verbose = st.session_state.get("verbose_input", True)
-
     mutable_set = [int(x.strip()) for x in mutable_rna1_str.split(",") if x.strip().isdigit()]
     watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
     linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
