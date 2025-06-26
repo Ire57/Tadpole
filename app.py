@@ -1182,118 +1182,54 @@ def linker_finder_tab():
                 st.text(report)
 
         # Mostrar resultados si existen
-        if "results" in st.session_state and st.session_state["results"]:
-            results = st.session_state["results"]
-            report = st.session_state["report"] # This is still the raw text log
-            labels = st.session_state.get("cluster_labels", [])
-            mutable_set = [int(x.strip()) for x in mutable_rna1.split(",") if x.strip().isdigit()]
-            watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
-            linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
+if "results" in st.session_state and st.session_state["results"]:
+    results = st.session_state["results"]
+    report = st.session_state["report"] # This is still the raw text log
+    labels = st.session_state.get("cluster_labels", [])
+    
+    # Ensure these variables are defined in your Streamlit app setup (sidebar/inputs)
+    # For this snippet, assuming they are accessible
+    # Example placeholders if not defined globally in your app.py:
+    # rna1 = st.session_state.get("rna1_input", "")
+    # rna3 = st.session_state.get("rna3_input", "")
+    # mutable_rna1_str = st.session_state.get("mutable_rna1_input", "")
+    # watched_positions_str = st.session_state.get("watched_positions_input", "")
+    # linker_min = st.session_state.get("linker_min_input", 5)
+    # linker_max = st.session_state.get("linker_max_input", 10)
+    # search_method = st.session_state.get("search_method_selected", "")
+    # linker_length_for_ga = st.session_state.get("ga_linker_length_input", 7) # Example GA specific
+    # ga_mutation_rate_rna1 = st.session_state.get("ga_mutation_rate_rna1_input", 0.02) # Example GA specific
+    # struct1 = st.session_state.get("struct1_input", "")
+    # constraint = st.session_state.get("constraint_input", "")
+    # use_mutaciones = st.session_state.get("use_mutaciones_input", False)
+    # mfe_delta = st.session_state.get("mfe_delta_input", 0)
+    # max_pairings = st.session_state.get("max_pairings_input", 5)
+    # max_changes = st.session_state.get("max_changes_input", 6)
+    # num_mut = st.session_state.get("num_mut_input", 0)
+    # verbose = st.session_state.get("verbose_input", True)
 
-            # These plotting functions are designed for multiple results.
-            # For GA, they will receive a list with one item.
-            img_path = plot_delta_mfe(results)
-            # Pass the correct RNA1 sequence (mutated for GA) to plot_pairings_histogram if it uses it.
-            # Assuming plot_pairings_histogram takes the original rna1 string.
-            # If it uses the internal rna1 from results, no change is needed.
-            # For GA, rna1_mutated_seq will be in results[0]['rna1_mutated_seq']
-            rna1_for_plotting = results[0].get('rna1_mutated_seq', rna1) if search_method == "Genetic Algorithm" and results else rna1
-            img_pairings = plot_pairings_histogram(results, rna1_for_plotting, rna3)
-            
-            st.success(f"✅ {len(results)} valid linkers found.")
+    mutable_set = [int(x.strip()) for x in mutable_rna1_str.split(",") if x.strip().isdigit()]
+    watched_positions = [int(x.strip()) for x in watched_positions_str.split(",") if x.strip().isdigit()]
+    linker_lengths = range(linker_min, linker_max + 1) # This is mostly for report generation; actual linker length used depends on method
 
-            # Agrupar por clúster
-            cluster_dict = defaultdict(list)
-            for idx, label in enumerate(labels):
-                cluster_dict[label].append((idx, results[idx]))
-            representative_img_bases = []
-            
-            for cluster_id, cluster_items in sorted(cluster_dict.items()):
-                st.markdown(f"## Cluster {cluster_id} ({len(cluster_items)} sequences)")
+    # These plotting functions are designed for multiple results.
+    # For GA, they will receive a list with one item.
+    img_path = plot_delta_mfe(results)
+    # Pass the correct RNA1 sequence (mutated for GA) to plot_pairings_histogram if it uses it.
+    rna1_for_plotting = results[0].get('rna1_mutated_seq', rna1) if search_method == "Genetic Algorithm" and results else rna1
+    img_pairings = plot_pairings_histogram(results, rna1_for_plotting, rna3)
+    
+    st.success(f"✅ {len(results)} valid linkers found.")
 
-                # Elegir representante: el de mejor MFE (con restricciones)
-                representative = min(cluster_items, key=lambda x: x[1]['mfe_2'])  # menor es mejor
+    # --- Display overall plots if they generated paths ---
+    if img_path and os.path.exists(img_path):
+        st.image(img_path, caption="Delta MFE Distribution")
+    if img_pairings and os.path.exists(img_pairings):
+        st.image(img_pairings, caption="RNA1-RNA3 Pairings Histogram")
+    # ----------------------------------------------------
 
-                idx, res = representative
-                representative_img_bases.append(res['linker'])
-                with st.expander(f" Representative Linker (#{idx + 1}): {res['linker']}"):
-                    st.markdown(f"**Sequence:** `{res['sequence']}`")
-                    st.markdown(f"**Constrained structure:** `{res['structure_constrained']}`")
-                    st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
-                    st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
-                    if res.get("mut1_info"):
-                        st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
-                    
-                    # RNAplot creates images in the folder, the file names are derived from linker
-                    # We need to explicitly check for the generated files based on the 'best_individual'
-                    # and the save_and_plot_structures function
-                    linker_for_img = res['linker']
-                    linker_len_for_img = len(linker_for_img) # Get the actual linker length
-                    folder = f"propuestas" # This path should be consistent with where plot_structures saves
-                    
-                    unconstrained_image_path = f"{folder}/{linker_for_img}_unconstrained_plot.png"
-                    constrained_image_path = f"{folder}/{linker_for_img}_constrained_plot.png"
-                    
-                    if os.path.exists(unconstrained_image_path):
-                        st.image(unconstrained_image_path, caption=f"Unconstrained Structure for Linker {linker_for_img}")
-                    if os.path.exists(constrained_image_path):
-                        st.image(constrained_image_path, caption=f"Constrained Structure for Linker {linker_for_img}")
-
-            plot_structure_dendrogram(results) # This might not be meaningful for a single GA result
-
-            # Adjust parameters for HTML report based on search method
-            current_rna1_for_report = rna1.strip()
-            current_num_mut_for_report = num_mut
-            current_linker_min_for_report = linker_min
-            current_linker_max_for_report = linker_max
-            
-            if search_method == "Genetic Algorithm" and results:
-                # Try to get the mutated RNA1 sequence from results.
-                # If 'rna1_mutated_seq' is not present, it will fallback to the original 'rna1' sequence.
-                current_rna1_for_report = results[0].get('rna1_mutated_seq', rna1)
-                # For GA, num_mut is implicitly handled by GA's internal mutation logic,
-                # but we can pass 0 or a placeholder as max mutations for RNA1 as per GA parameters
-                current_num_mut_for_report = f"GA (Rate: {ga_mutation_rate_rna1})" 
-                current_linker_min_for_report = linker_length_for_ga
-                current_linker_max_for_report = linker_length_for_ga # Fixed length
-
-            # This is where you generate your rich HTML report
-            html = construir_html_reporte_completo(
-                results=st.session_state["results"],
-                report=st.session_state["report"], # Passing the raw log to be included in the HTML report
-                rna1=current_rna1_for_report,
-                rna3=rna3,
-                struct1=struct1,
-                constraint=constraint,
-                mutable_rna1=mutable_set,
-                watched_positions=watched_positions,
-                use_mutaciones=use_mutaciones,
-                mfe_delta=mfe_delta,
-                max_pairings=max_pairings,
-                max_changes=max_changes,
-                num_mut=current_num_mut_for_report,
-                linker_min=current_linker_min_for_report,
-                linker_max=current_linker_max_for_report,
-                verbose=verbose,
-                cluster_labels=st.session_state["cluster_labels"],
-                representative_img_bases=representative_img_bases,
-                search_method=search_method # Now included
-            )
-
-            st.markdown("### 📝 Full Search Report:")
-            
-
-            #pdf_path = generar_pdf_desde_html(html)
-
-            #with open(pdf_path, "rb") as f:
-            #    st.download_button(
-            #        label="📥 Download full PDF report",
-            #        data=f.read(),
-            #        file_name="informe_linkers.pdf",
-            #        mime="application/pdf"
-            #    )
-
-            st.header("Candidate Linker Solutions")
+    st.markdown("---")
+    st.header("Candidate Linker Solutions")
 
     if labels and len(set(labels)) > 1: # If clustering was performed and there's more than one cluster
         st.subheader("Representative Linkers (by Cluster)")
@@ -1308,7 +1244,7 @@ def linker_finder_tab():
                 st.markdown(f"## Cluster {cluster_id} ({len(cluster_items)} sequences)")
 
             # Choose representative: e.g., the one with the best constrained MFE
-            representative = min(cluster_items, key=lambda x: x[1]['mfe_2'])
+            representative = min(cluster_items, key=lambda x: x[1]['mfe_2']) # menor es mejor
             idx, res = representative[0], representative[1] # Unpack idx and result dict
 
             with st.expander(f" Representative Linker (#{idx + 1}): {res['linker']} (Cluster {cluster_id})"):
@@ -1320,7 +1256,7 @@ def linker_finder_tab():
                 if res.get("mut1_info"):
                     st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
 
-                # >>> Display images for the representative linker <<<
+                # >>> CORRECTED: Display images using the paths stored in 'image_paths' <<<
                 image_paths = res.get('image_paths', {}) # Safely get the dictionary of paths
                 if image_paths:
                     if 'unconstrained' in image_paths and os.path.exists(image_paths['unconstrained']):
@@ -1361,6 +1297,11 @@ def linker_finder_tab():
                 else:
                     st.info(f"No image paths stored for Best Linker {res['linker']}.")
 
+    # --- Dendrogram (moved here for better flow after main candidate display) ---
+    if labels and len(set(labels)) > 1: # Only plot if clustering actually happened and there's more than one cluster
+        plot_structure_dendrogram(results) # This might not be meaningful for a single GA result
+    # -------------------------------------------------------------------------
+
     st.markdown("---")
     show_all = st.checkbox("Show all linkers")
     if show_all:
@@ -1392,7 +1333,48 @@ def linker_finder_tab():
                 else:
                     st.info(f"No image paths stored for Linker {res['linker']}. Images might not have been generated or stored correctly.")
 
+    st.markdown("### 📝 Full Search Report:")
+    st.text(report) # Display the full report text generated by the search function
 
+
+    # Adjust parameters for HTML report based on search method
+    current_rna1_for_report = rna1.strip()
+    current_num_mut_for_report = num_mut
+    current_linker_min_for_report = linker_min
+    current_linker_max_for_report = linker_max
+    
+    if search_method == "Genetic Algorithm" and results:
+        # Try to get the mutated RNA1 sequence from results.
+        # If 'rna1_mutated_seq' is not present, it will fallback to the original 'rna1' sequence.
+        current_rna1_for_report = results[0].get('rna1_mutated_seq', rna1)
+        # For GA, num_mut is implicitly handled by GA's internal mutation logic,
+        # but we can pass 0 or a placeholder as max mutations for RNA1 as per GA parameters
+        current_num_mut_for_report = f"GA (Rate: {ga_mutation_rate_rna1})"
+        current_linker_min_for_report = linker_length_for_ga
+        current_linker_max_for_report = linker_length_for_ga # Fixed length
+
+    # This is where you generate your rich HTML report
+    html = construir_html_reporte_completo(
+        results=st.session_state["results"],
+        report=st.session_state["report"], # Passing the raw log to be included in the HTML report
+        rna1=current_rna1_for_report,
+        rna3=rna3,
+        struct1=struct1,
+        constraint=constraint,
+        mutable_rna1=mutable_set,
+        watched_positions=watched_positions,
+        use_mutaciones=use_mutaciones,
+        mfe_delta=mfe_delta,
+        max_pairings=max_pairings,
+        max_changes=max_changes,
+        num_mut=current_num_mut_for_report,
+        linker_min=current_linker_min_for_report,
+        linker_max=current_linker_max_for_report,
+        verbose=verbose,
+        cluster_labels=st.session_state["cluster_labels"],
+        representative_img_bases=representative_img_bases, # This might need adjusting if your HTML report needs actual image paths
+        search_method=search_method # Now included
+    )
 # ---------------- TABS PRINCIPALES ----------------
 tabs = st.tabs([" Linker Finder", " MSA-Based Analyses"])
 
