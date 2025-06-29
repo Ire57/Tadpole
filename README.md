@@ -24,7 +24,12 @@ Linker Finder: This tool integrates a genetic algorithm to optimize RNA linker s
 - Outputting the best linker sequences with their structural and fitness data.
 
 ---
+---
+## Web Application Access
 
+While Streamlit offers a direct application deployment service, the inherent complexity of our application—specifically its reliance on libraries such as ViennaRNA and Ghostscript, which necessitate compilation beyond standard Python environments—precluded its direct deployment via Streamlit for this phase. Consequently, a demonstration version of the tool has been deployed on **Render** (https://render.com/) to ensure its accessibility for evaluation. It is important to note that this current deployment operates within Render's limited resource model, which may result in longer initial page load times. For optimal performance and to effectively test the application's core functionality, it is recommended to utilise the Genetic Algorithm (GA) option, configuring it with approximately 10 generations and a low energy difference (MFE Delta). It should be noted that a different deployment strategy may be employed for the application's final public release. Access the live demonstration here: \href{https://toolkit-m4g6.onrender.com/}{Access the demo here}
+
+---
 ## Requirements and Installation
 ### Requirements
 Python 3.8 or higher
@@ -47,17 +52,13 @@ sudo apt-get install -y python3-pip python3-venv git ghostscript \
 2. Install ViennaRNA Package
 Download and install ViennaRNA following the official instructions:
 https://www.tbi.univie.ac.at/RNA/
-
-Or install via package manager (may not be latest version):
-
-
 sudo apt-get install viennarna
-Make sure the command RNAplot is available in your terminal.
 
-3. Clone this repository (not available untill publication of the iGem Project)
 
-git clone https://github.com/your_username/your_repository.git
-cd your_repository
+3. Clone this repository:
+
+git clone https://github.com/Ire57/Toolkit.git
+cd Toolkit
 
 4. Create and activate a Python virtual environment (recommended)
 python3 -m venv venv
@@ -71,23 +72,17 @@ pip install -r requirements.txt
 Verify installation
 
 Check ViennaRNA tools:
-
 RNAplot --help
+
+
 Check Ghostscript:
-
 gs --version
+
 Check Python packages:
-
-
 python -c "import RNA, streamlit, weasyprint; print('All packages loaded successfully')"
 
 
----
-## Web Application Access
 
-While Streamlit offers a direct application deployment service, the inherent complexity of our application—specifically its reliance on libraries such as ViennaRNA and Ghostscript, which necessitate compilation beyond standard Python environments—precluded its direct deployment via Streamlit for this phase. Consequently, a demonstration version of the tool has been deployed on **Render** (https://render.com/) to ensure its accessibility for evaluation. It is important to note that this current deployment operates within Render's limited resource model, which may result in longer initial page load times. For optimal performance and to effectively test the application's core functionality, it is recommended to utilize the Genetic Algorithm (GA) option, configuring it with approximately 10 generations and a low energy difference (MFE Delta). It should be noted that a different deployment strategy may be employed for the application's final public release. Access the live demonstration here: \href{https://toolkit-m4g6.onrender.com/}{Access the demo here}
-
----
 
 ## Quick Start Guide
 
@@ -100,7 +95,7 @@ streamlit run app.py
 The app will validate the file and display:
 
 - Predicted secondary structure for the first sequence.
-- Conservation visualization mapped onto the structure.
+- Conservation visualisation mapped onto the structure.
 - Optionally, enable viewing structures for all sequences.
 
 3. Explore generated images to analyze sequence conservation and structure.
