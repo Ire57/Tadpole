@@ -23,7 +23,6 @@ Linker Finder: This tool integrates a genetic algorithm to optimize RNA linker s
 
 - Outputting the best linker sequences with their structural and fitness data.
 
-
 ---
 
 ## Requirements and Installation
@@ -62,7 +61,7 @@ cd your_repository
 
 4. Create and activate a Python virtual environment (recommended)
 python3 -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\actívate
+source venv/bin/activate    # On Windows: venv\Scripts\actívate
 
 5. Install Python dependencies
 pip install --upgrade pip
@@ -82,6 +81,13 @@ Check Python packages:
 
 python -c "import RNA, streamlit, weasyprint; print('All packages loaded successfully')"
 
+
+---
+## Web Application Access
+
+While Streamlit offers a direct application deployment service, the inherent complexity of our application—specifically its reliance on libraries such as ViennaRNA and Ghostscript, which necessitate compilation beyond standard Python environments—precluded its direct deployment via Streamlit for this phase. Consequently, a demonstration version of the tool has been deployed on **Render** (https://render.com/) to ensure its accessibility for evaluation. It is important to note that this current deployment operates within Render's limited resource model, which may result in longer initial page load times. For optimal performance and to effectively test the application's core functionality, it is recommended to utilize the Genetic Algorithm (GA) option, configuring it with approximately 10 generations and a low energy difference (MFE Delta). It should be noted that a different deployment strategy may be employed for the application's final public release. Access the live demonstration here: \href{https://toolkit-m4g6.onrender.com/}{Access the demo here}
+
+---
 
 ## Quick Start Guide
 
