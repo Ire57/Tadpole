@@ -1903,7 +1903,7 @@ def linker_finder_tab():
 
             # 3. Muestra el botón de descarga en Streamlit
             st.download_button(
-                label="Descargar todos los resultados",
+                label="Download results",
                 data=zip_data,
                 file_name="results_rna_switch.zip",
                 mime="application/zip"
