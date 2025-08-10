@@ -1,6 +1,24 @@
 import os
 from PIL import Image
 from IPython.display import display
+import os
+import shutil
+import zipfile
+import io
+
+def create_zip_archive(source_dir):
+    """
+    Comprime un directorio completo en un archivo ZIP y devuelve el contenido binario.
+    """
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(source_dir):
+            for file in files:
+                zipf.write(os.path.join(root, file),
+                           os.path.relpath(os.path.join(root, file),
+                                           os.path.join(source_dir, '..')))
+    buffer.seek(0)
+    return buffer.getvalue()
 
 def save_and_plot_structures(seq, structure_unconstr, structure_constr,
                              rna1, linker, rna3, mut1_info, mfe_1, mfe_2,

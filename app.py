@@ -15,6 +15,7 @@ from structure import predict_secundary_structure, align_secondary_structure
 from rna_structures import get_base_pairs
 from genetic_algorithm import run_genetic_algorithm_search 
 from conservation import calculate_conservation, clasify_conservation, conservation_category, calculate_complementarity_conservation
+from io_tools import create_zip_archive
 from scipy.spatial.distance import pdist, squareform
 import numpy as np
 import shutil
@@ -1897,8 +1898,22 @@ def linker_finder_tab():
                 image_output_dir=folder,
                 representative_img_bases=representative_img_bases
             )
+            # 2. Comprime el directorio y obtén el contenido binario
+            zip_data = create_zip_archive(folder)
 
-            st.markdown("### 📝 Full Search Report:")
+            # 3. Muestra el botón de descarga en Streamlit
+            st.download_button(
+                label="Descargar todos los resultados",
+                data=zip_data,
+                file_name="results_rna_switch.zip",
+                mime="application/zip"
+            )
+
+            # 4. Limpia la carpeta temporal después de la descarga (opcional, pero recomendado)
+            # Esto asegura que no se acumulen archivos innecesarios en el servidor.
+            #if os.path.exists(folder):
+            #    shutil.rmtree(folder)
+            
             
 
             #pdf_path = generar_pdf_desde_html(html)
@@ -1912,6 +1927,7 @@ def linker_finder_tab():
             #    )
 
             show_all = st.checkbox("Show all linkers")
+            folder = f"{folder}/linker_{len((results[0])['linker'])}"
             if show_all:
                 for idx, res in enumerate(results):
                     with st.expander(f" Linker {idx + 1}: {res['linker']}"):
@@ -1925,11 +1941,11 @@ def linker_finder_tab():
                         
                         linker_for_img = res['linker']
                         linker_len_for_img = len(linker_for_img)
-                        folder = f"{folder}/linker_{linker_len_for_img}"
+                        
                         
                         unconstrained_image_path = f"{folder}/{linker_for_img}_unconstrained_plot.png"
                         constrained_image_path = f"{folder}/{linker_for_img}_constrained_plot.png"
-                        
+                        print(constrained_image_path)
                         if os.path.exists(unconstrained_image_path):
                             st.image(unconstrained_image_path, caption=f"Unconstrained Structure for Linker {linker_for_img}")
                         if os.path.exists(constrained_image_path):
