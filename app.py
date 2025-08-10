@@ -1510,27 +1510,27 @@ def linker_finder_tab():
         # Inputs
         with st.expander("Sequences and targeted structure", expanded=True):
             rna1 = st.text_area(
-                label="RNA Segment 1",
+                label="Structural RNA element",
                 value='ACCAGUGUGCGGAUGAUAACUACUGACGAAAGAGUCAUCGACUCAGUUAGUGGUUGGAUGUAGUCACAUUAGU',
                 height=110,
-                placeholder="Introduce the RNA1 sequence  (A, C, G, U).",
-                help="This is the RNA element whose function (to be modulated) depends on structure."
+                placeholder="Introduce the SRE sequence  (A, C, G, U).",
+                help="More infromation on 'About the Parts -> Structural RNA element'"
             )
 
             rna3 = st.text_area(
-                label="RNA Segment 2",
+                label="Aptamer",
                 value='AGUUGGUGAUACCAGCAUCGUCUUGAUGCCCUUGGCAGCACCAAAA',
                 height=110,
-                placeholder="Introduce the RNA2 sequence (A, C, G, U).",
-                help="This is the aptamer's sequence."
+                placeholder="Introduce the aptamer sequence (A, C, G, U).",
+                help="More infromation on 'About the Parts -> Aptamer'"
             )
 
             struct1 = st.text_input(
-                label="Targeted structure of the RNA1 element (dot-bracket)",
+                label="Targeted structure of the SRE element (dot-bracket)",
                 value='((.(((((((......(((((((((((....(((((...))))).)))))))))))......).)))))).))',
                 placeholder="Example: ((.((...)))).",
-                help="Put here the theoretical structure of the RNA1 element (determined experimentally or through " \
-                "a prediction software, like RNAFold). This is the structure that the RNA1 sequence is going to be forced to have on the constrained (ON) state"
+                help="Put here the theoretical structure of the SRE element (determined experimentally or through " \
+                "a prediction software, like RNAFold). This is the structure that the SRE sequence is going to be forced to have on the constrained (ON) state"
             )
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1540,7 +1540,7 @@ def linker_finder_tab():
             search_method = st.radio(
                 "Select Search Method",
                 ("Brute Force", "Genetic Algorithm"),
-                help="Choose between exhaustive search (Brute Force) or an evolutionary algorithm (Genetic Algorithm)."
+                help="More information on 'Help -> Documentation'"
             )
 
             constraint = st.text_input(
@@ -1552,21 +1552,21 @@ def linker_finder_tab():
                 "to avoid pairing that nucleotide and '>' to avoid pairing with later nts and '<' to avoid pairing with previous nucleotides."
             )
             mutable_rna1 = st.text_input(
-                label="Mutable positions for RNA1",
+                label="Mutable positions for SRE",
                 value="1, 2, 4, 5, 6, 7, 8, 9",
                 placeholder="Ex: 1, 2, 4, 5, 6",
                 help="This positions should be nucleotides known for NOT having an impact on functionallity. " \
                 "Notice that, if paired on the input targeted structure, the pairs will be mutated aswell to mantain complementarity."
             )
             watched_positions_str = st.text_input(
-                label="Watched positions for RNA1",
+                label="Watched positions for SRE",
                 value="56",
                 placeholder="Ex: 56, 57",
-                help="Positions key to functionality for the RNA1 element whose pairing "
+                help="Positions key to functionality for the SRE element whose pairing "
                 "(from respect to the input targeted structure) will be forced to change to ensure the OFF state disrupts functionality."
             )
         
-            use_mutations = st.checkbox("Allow mutations on RNA1", value=True)
+            use_mutations = st.checkbox("Allow mutations on SRE", value=True)
         
             # compute mutation rang
             mutable_set = [int(x.strip()) for x in mutable_rna1.split(",") if x.strip().isdigit()]
@@ -1591,7 +1591,7 @@ def linker_finder_tab():
                 max_value=10,
                 value=7,
                 step=1,
-                help="The linker is the key element that will be randomised untill one is found such that it makes the ON/OFF system possible"
+                help="More infromation on 'About the Parts -> System in Detail'. The linker is the key element that will be randomised untill one is found such that it makes the ON/OFF system possible"
             )
             linker_max = st.slider(
                 label="Linker's maximum length",
@@ -1599,25 +1599,25 @@ def linker_finder_tab():
                 max_value=10,
                 value=7,
                 step=1,
-                help="Linkers of length from the minimum length up to this length will be tested."
+                help="More infromation on 'About the Parts -> System in Detail'. Linkers of length from the minimum length up to this length will be tested."
             )
         
             mfe_delta = st.number_input(
                 label="Minimum Energy difference (kcal/mol)",
                 min_value=0.0, max_value=20.0, value=0.0, step=0.1,
-                help="Difference between the energy of the constrained" \
+                help="More infromation on 'About the Parts -> System in Detail'. Difference between the energy of the constrained" \
                 "(ON) state and the unconstrained (OFF) state. It should be approximately half " \
                 "the binding energy of the aptamer–ligand interaction."
             )
             max_pairings = st.number_input(
-                label="Maximum number of RNA1-RNA3 pairings",
+                label="Maximum number of SRE-aptamer pairings",
                 min_value=0, max_value=20, value=15, step=1,
-                help="Binding with the ligand can't brake many pairings. To ensure the switch's functionality, " \
+                help="More infromation on 'About the Parts -> System in Detail'. Binding with the ligand can't brake many pairings. To ensure the switch's functionality, " \
                 "one should choose a low number of pairings. However, if this conditions is very restrictive, " \
                 "the ON/OFF system might not be possible to construct, and thus it is allowed to modulate this value."
             )
             max_changes = st.number_input(
-                label="Maximum changes on the RNA1 structure",
+                label="Maximum changes on the SRE1 structure",
                 min_value=0, max_value=20, value=6, step=1,
                 help="The input targeted structure might not need to be much restrictive, " \
                 "as maybe not the whole structure is important for functionality. Therefore " \
@@ -1645,9 +1645,9 @@ def linker_finder_tab():
                     help="Fraction of the best individuals that are directly passed to the next generation."
                 )
                 ga_mutation_rate_rna1 = st.slider(
-                    label="RNA1 Mutation Rate",
+                    label="SRE Mutation Rate",
                     min_value=0.0, max_value=0.2, value=0.02, step=0.005,
-                    help="Probability of a base mutation in RNA1 per position."
+                    help="Probability of a base mutation in SRE per position."
                 )
                 ga_mutation_rate_linker = st.slider(
                     label="Linker Mutation Rate",
@@ -1706,7 +1706,7 @@ def linker_finder_tab():
             output_container.code("", language="text")  # Clean container
 
             if not rna1.strip() or not rna3.strip() or not struct1.strip():
-                st.warning("Please, introduce RNA1 and RNA3 sequences and targeted structure")
+                st.warning("Please, introduce SRE and aptamer sequences and targeted structure")
                 st.stop()
 
             try:
@@ -1840,7 +1840,7 @@ def linker_finder_tab():
                         st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
                         st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
                         if res.get("mut1_info"):
-                            st.markdown(f"**RNA1 mutations:** {res['mut1_info']}")
+                            st.markdown(f"**SRE's mutations:** {res['mut1_info']}")
 
                         # RNAplot creates images in the folder, the file names are derived from linker
                         # We need to explicitly check for the generated files based on the 'best_individual'
@@ -1937,7 +1937,7 @@ def linker_finder_tab():
                         st.markdown(f"**MFE (unconstrained):** {res['mfe_1']:.2f} kcal/mol")
                         st.markdown(f"**MFE (constrained):** {res['mfe_2']:.2f} kcal/mol")
                         if res.get("mut1_info"):
-                            st.markdown(f"**Mutations on RNA1:** {res['mut1_info']}")
+                            st.markdown(f"**Mutations on SRE:** {res['mut1_info']}")
                         
                         linker_for_img = res['linker']
                         linker_len_for_img = len(linker_for_img)
@@ -2023,7 +2023,10 @@ def aptamers_tab():
 def system_detail():
     st.header("The system in detail")
     st.markdown("""
-    Let’s break down how the three key parameters shape the system's functionality:
+     
+
+
+    ## Let’s break down how the three key parameters shape the system's functionality:
 
     ### 1. Linker Length
 
@@ -2062,10 +2065,10 @@ def system_detail():
 
     Without the ligand, we want to have the OFF state, so we want the OFF state without the ligand (central figure) to be the most stable one (and therefore have a lower energy than the ON state with the ligand, left figure). With the ligand, we want to have the ON state, so we want the ON state (left figure) to be more stable than the OFF state with the ligand (right figure) (and therefore have a lower energy).
 
-    ### 3. Maximum Number of RNA1–RNA3 Pairings
+    ### 3. Maximum Number of SRE–Aptamers Pairings
 
     <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
-    A constraint on how many base pairs are allowed to form between RNA1 (the SRE) and RNA3 (the aptamer) in the OFF state.
+    A constraint on how many base pairs are allowed to form between the SRE and the aptamer in the OFF state.
 
     <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
     In the OFF state, the aptamer must partially bind the SRE to prevent it from forming its active structure. However:  
@@ -2076,9 +2079,6 @@ def system_detail():
     Strike a balance: allow enough pairing for functional repression, but leave room for switching. This variable helps tune the strength of repression and influences whether ligand binding can successfully revert the system to the ON state.  
     This parameter is especially useful when testing different SRE or aptamer sequences, as their pairing potential may vary significantly.
     """, unsafe_allow_html=True)
-
-
-
 
 
 def help_tab():
@@ -2113,20 +2113,39 @@ def help_tab():
 
         <hr style="margin-top:2em; margin-bottom:2em;">
         """ , unsafe_allow_html=True)
+        st.markdown("""
+        <h2 style="margin-top: 1em;">Main Feature: Model System</h2>
+        In short, you input your RNA element and aptamer, and the tool helps you turn them into a functional RNA switch.
 
+        RNA **ON/OFF** switches are systems that control gene expression based solely on whether a small molecule is present or not.  
+
+        The system is built from three parts:
+
+        1. **A structural RNA element (SRE)**  
+           For example, a readthrough or frameshift motif, whose function depends on its correct folding. Only with the correct structure will it perform its function.
+
+        2. **An aptamer**  
+           Binds to a small molecule (**ligand**).
+
+        3. **A linker**  
+           Connects both and controls how their structures interact.
+
+        """, unsafe_allow_html=True)
         # Imagen centralizada con columnas
         col1, col2, col3 = st.columns([1.5, 4, 1])
         with col2:
             st.image("images/system.png", width=700)
 
         st.markdown("""
-        **ON state vs OFF state:**
+        **In this image, you can see the ON (right) and OFF (left) states.**
 
         - **OFF state:**  
-          The aptamer and the SRE are paired. This means the structure of the SRE is disrupted, and it will not perform its function — this is the OFF state.
+          The aptamer and the SRE are paired. This means the structure of the SRE is disrupted, and it will not perform its function, and therefore this is the OFF state.
+
 
         - **ON state:**  
-          The aptamer is bound to the ligand and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state.
+          The aptamer is bound to ligand, and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state. 
+
 
         ---
         """)
@@ -2227,6 +2246,59 @@ def help_tab():
         st.markdown("---")
 
     with help_sub_tabs[1]:  # Documentation
+        st.markdown("""
+                       ## Search Methods Overview
+
+    #### Brute Force
+    This method **tries every single possible combination** to see which ones work.  
+    It is simple and guarantees you’ll find *all* possible solutions, but if there are too many combinations, it can take an extremely long time.
+
+    **⚠️ Important:**  
+    If you allow mutations in Brute Force, the number of possibilities grows enormously, and the search can become practically impossible to finish.  
+    If you need mutations, or the number of possibilities is high (for a long linker for example) **use the Genetic Algorithm instead**.
+
+    ---
+
+    #### Genetic Algorithm (GA)
+    A Genetic Algorithm works a bit like **natural selection in biology**:
+    1. **Start** with a group of random possible solutions (called *population*).
+    2. **Test** each one to see how well it works (*fitness*).
+    3. **Keep** the best ones.
+    4. **Mix** them together (reproduction) and make small random changes (*mutations*) to create a new generation.
+    5. **Repeat** this process until a good solution is found.
+
+    It doesn’t try *every* possibility, but it’s much faster to find solutions when the number of possibilities is huge.
+
+    ---
+
+    ### ⚙️ Genetic Algorithm Parameters
+
+    **Population Size – How many different candidates are tested at the same time.**  
+    - 🔼 **Higher** → Explores more possibilities at once, increasing chances of finding good solutions but each generation takes longer to compute.  
+    - 🔽 **Lower** → Faster per generation, but less diversity and higher risk of getting stuck in mediocre solutions.  
+
+    **Number of Generations – How many times the process repeats.**  
+    - 🔼 **Higher** → More time for the algorithm to refine solutions, but longer total runtime.  
+    - 🔽 **Lower** → Quicker results, but solutions may be less optimised.  
+
+    **Elitism Rate – Percentage of the best candidates kept unchanged for the next round.**  
+    - 🔼 **Higher** → Keeps more top solutions, ensuring quality, but reduces exploration of new possibilities.  
+    - 🔽 **Lower** → More exploration, but may lose very good solutions along the way.  
+
+    **SRE Mutation Rate – Chance of changing each base in RNA1 during evolution.**  
+    - 🔼 **Higher** → More exploration and diversity in RNA1 sequences, but can destroy promising structures.  
+    - 🔽 **Lower** → More stability in RNA1, but less chance to discover unexpected improvements.  
+
+    **Linker Mutation Rate – Chance of changing each base in the linker.**  
+    - 🔼 **Higher** → More variation in linker sequences and potential new folding patterns, but also more instability.  
+    - 🔽 **Lower** → More structural stability, but fewer creative linker solutions.  
+
+    **Tournament Size – How many candidates compete at once before picking the winner.**  
+    - 🔼 **Higher** → Picks stronger candidates more often, speeding convergence but risking loss of diversity.  
+    - 🔽 **Lower** → Keeps more diversity, but takes longer to reach high-quality solutions.  
+
+    **Note:** For GA, the linker length is **fixed** and comes from the "Linker's minimum length" setting.
+    """)
         st.header("Modules and Functions Documentation")
 
         st.subheader("conservation.py")
