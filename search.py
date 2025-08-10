@@ -3,7 +3,7 @@ import RNA
 from rna_structures import get_pairing_dict, constrained_mfe, get_base_pairs
 from rna_mutation import mutate_sequence, mutate_with_complement
 from io_tools import save_and_plot_structures
-from rna_cluster import matriz_rmsd, cluster_structures, summary_image_per_group, compute_metrics, visualise_metrics
+from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, compute_metrics, visualise_metrics
 
 def count_rna1_rna3_pairings(struct, rna1, rna3, linker):
     """
@@ -56,8 +56,8 @@ def check_rna1_structure_preserved(rna1, linker, rna3, structure_constrained, st
     return num_changes
 
 def run_linker_search(rna1, rna3, struct1, constraint,
-                      mutable_rna1, watched_positions,
-                      use_mutaciones=True, mfe_delta=0,
+                      mutable_rna1, watched_positions, output_dir,
+                      use_mutations=True, mfe_delta=0,
                       max_pairings_rna1_rna3=5,
                       max_structure_changes=6, num_mut=0,
                       linker_lengths=range(7, 10),
@@ -81,7 +81,7 @@ def run_linker_search(rna1, rna3, struct1, constraint,
                               a change in their pairing status (paired/unpaired) from
                               the OFF state (struct1) to the OFF state of the full construct
                               (RNA1-linker-RNA3) (list of int).
-    :param use_mutaciones: If True, the function will also explore mutations in RNA1
+    :param use_mutations: If True, the function will also explore mutations in RNA1
                            up to 'num_mut' for each linker. Defaults to True (bool).
     :param mfe_delta: The minimum required difference in MFE (MFE_ON - MFE_OFF) for a
                       linker to be considered valid. Higher values indicate a stronger switch (float).
@@ -94,7 +94,7 @@ def run_linker_search(rna1, rna3, struct1, constraint,
                                   within the constrained (ON) state compared to its original
                                   structure (struct1). Solutions exceeding this are discarded.
                                   Defaults to 6 (int).
-    :param num_mut: The maximum number of mutations to try for RNA1 if 'use_mutaciones' is True.
+    :param num_mut: The maximum number of mutations to try for RNA1 if 'use_mutations' is True.
                     Defaults to 0 (int).
     :param linker_lengths: A range or list of integers specifying the lengths of linkers
                            to generate and test. Defaults to range(7, 10).
@@ -189,7 +189,7 @@ def run_linker_search(rna1, rna3, struct1, constraint,
                     discarded_examples["structure_changes_exceed"].append(linker)
                 continue
             
-            if not use_mutaciones:
+            if not use_mutations:
                 if mfe_1 >= mfe_2 - mfe_delta:
                     discarded_counts["mfe_delta_not_met"] += 1
                     if len(discarded_examples["mfe_delta_not_met"]) < 3:
@@ -206,7 +206,7 @@ def run_linker_search(rna1, rna3, struct1, constraint,
                         'mfe_1': mfe_1,
                         'mfe_2': mfe_2
                     })
-                    save_and_plot_structures(seq_full, struct_full, struct_constr, rna1, linker, rna3, [], mfe_1, mfe_2)
+                    save_and_plot_structures(seq_full, struct_full, struct_constr, rna1, linker, rna3, [], mfe_1, mfe_2, output_dir)
                     count_found += 1
                 continue
 
@@ -244,8 +244,32 @@ def run_linker_search(rna1, rna3, struct1, constraint,
                         break
         if stop_requested:
             break 
+        print('strart clustering')
 
+            # Call clustering and plotting functions from rna_cluster and io_tools
+        if len(results) > 1:
+            print('entered clustering')
+            msa_for_cluster = [res['sequence'] for res in results]
+            estructuras_for_cluster = [res['structure_unconstrained'] for res in results]
+            print('entered clustering 1')
+            rmsd_matrix = matriz_rmsd(estructuras_for_cluster)
+            labels = cluster_structures(rmsd_matrix, eps=3.0, min_samples=1)
+            print('entered clustering 2')
+            unique_labels = set(labels)
+            num_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0) if labels.size > 0 else 0
+            print('entered clustering 3')
+            log_func(f"Clustering complete. Found {num_clusters} clusters.")
+            print('entered clustering 4')
+            cluster_labels = labels
+            
+            resumen_cluster = organise_per_clusters(msa_for_cluster, estructuras_for_cluster, labels, rmsd_matrix, output_base=f"{output_dir}/clusters")
 
+            metricas = compute_metrics(estructuras_for_cluster, times=[])
+            visualise_metrics(metricas, output_dir)
+        else:
+            log_func("Only one valid solution found, clustering skipped.")
+            cluster_labels = [0] if results else []
+            
 
     report = f"--- Linker Finder Report ---\n"
     report += f"Total evaluated linkers: {len(linkers_tried)}\n"
@@ -260,4 +284,4 @@ def run_linker_search(rna1, rna3, struct1, constraint,
         report += "\n⚠️ MAny linkers do not met the ΔMFE criteria. Consider reducing that parameter.\n"
     
 
-    return results, report
+    return results, report, cluster_labels

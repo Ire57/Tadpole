@@ -107,11 +107,7 @@ def matriz_rmsd(estructuras):
     # Fill the upper triangle (and implicitly the lower due to symmetry)
     for i in range(n):
         for j in range(i + 1, n): # Start 'j' from 'i+1' for unique pairs
-            print(f"Comparing structures {i} and {j}:")
-            print(f"  Pairs {pairs_list[i]}")
-            print(f"  Pairs {pairs_list[j]}")
             d = rmsd_pairs(pairs_list[i], pairs_list[j]) # Calculate RMSD
-            print(f"  RMSD: {d}")
             matriz[i, j] = d # Assign to upper triangle
             matriz[j, i] = d # Assign to lower triangle for symmetry
     return matriz
@@ -237,51 +233,9 @@ def organise_per_clusters(msa, estructuras, labels, rmsd_matrix, output_base="rn
     return summary
 
 
-def summary_image_per_group(output_base="rna_clusters"):
-    """
-    Generates a summary image for each cluster, typically by copying the PNG plot
-    of the representative structure into the cluster's directory.
-
-    This function iterates through all identified clusters. For each cluster,
-    it attempts to find the pre-generated PNG image of its representative structure
-    (which would typically be created by an external plotting tool like RNAplot
-    and named consistently). If found, it copies this PNG to the cluster's
-    main directory as 'resumen.png' for easy overview. If the PNG is not found,
-    it falls back to copying the representative's `.fold` file as a text summary.
-
-    :param output_base: The base directory where cluster-related output (including
-                        representative and group folders) is stored. Defaults to "rna_clusters" (str).
-
-    :returns: None. This function performs side effects (file copying).
-    """
-    rep_dir = os.path.join(output_base, "representantes")
-    # Get a list of all directories that represent a cluster group
-    groups = [d for d in os.listdir(output_base) if d.startswith("grupo_")]
-
-    for group in groups:
-        grupo_path = os.path.join(output_base, group)
-
-        # Extract only the numerical ID of the group (e.g., '15' from 'grupo_15')
-        grupo_id = group.replace("group_", "")
-
-        # Construct the expected path for the representative's .fold file and its corresponding .png plot
-        #rep_fold = os.path.join(rep_dir, f"rep_group_{grupo_id}.fold")
-        #rep_png = rep_fold.replace(".fold", "_plot.png") # Assumes _plot.png naming convention from RNAplot
-
-        #if os.path.exists(rep_png):
-        #    # If the PNG exists, open it and save it as 'resumen.png' in the group's directory
-        #    im = Image.open(rep_png)
-        #    im.save(os.path.join(grupo_path, "summary.png"))
-        #else:
-        #    # If the PNG is not found, as a fallback, copy the .fold file contents to a .txt file
-        #    if os.path.exists(rep_fold):
-        #        with open(rep_fold) as f:
-        #            txt = f.read()
-        #        with open(os.path.join(grupo_path, "summary.txt"), "w") as f:
-        #            f.write(txt)
 
 
-def compute_metrics(structures, tiempos):
+def compute_metrics(structures, times):
     """
     Calculates key performance metrics for the RNA structure analysis and clustering.
 
@@ -291,7 +245,7 @@ def compute_metrics(structures, tiempos):
 
     :param structures: A list of RNA secondary structure strings. Used to determine
                         the number of unique structures (list of str).
-    :param tiempos: A list of time values (e.g., seconds per folding/evaluation step).
+    :param times: A list of time values (e.g., seconds per folding/evaluation step).
                     Used to calculate total time (list of float).
 
     :returns: A dictionary containing the calculated metrics:
@@ -302,7 +256,7 @@ def compute_metrics(structures, tiempos):
     total = len(structures) # Total number of structures provided
     unique = len(set(structures)) # Number of unique structure strings
     
-    total_time = sum(tiempos) # Sum all individual time measurements
+    total_time = sum(times) # Sum all individual time measurements
 
     metrics = {
         "total_structures": total,
@@ -312,7 +266,7 @@ def compute_metrics(structures, tiempos):
 
     return metrics
 
-def visualise_metrics(metrics):
+def visualise_metrics(metrics,output_dir):
     """
     Generates and saves a bar plot visualizing key diversity metrics of the RNA structures.
 
@@ -331,4 +285,4 @@ def visualise_metrics(metrics):
     plt.title("Diversity of Structures") # Set plot title
     plt.ylabel("Quantity") # Set y-axis label
     plt.tight_layout() # Adjust plot parameters for a tight layout
-    #plt.savefig("rna_clusters/diversity.png") # Save the plot to a file
+    plt.savefig(f"{output_dir}/diversity.png") # Save the plot to a file

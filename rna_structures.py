@@ -51,6 +51,8 @@ def get_base_pairs(structure):
             # If a closing parenthesis is found, pop the last opening parenthesis's index
             j = stack.pop()
             pairs.append((j, i))  # Store the pair as (opening_idx, closing_idx)
+        else:
+            continue
     return pairs
 
 def get_pair_table(struct):

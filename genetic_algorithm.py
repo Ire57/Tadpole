@@ -1,11 +1,12 @@
 import random
 import RNA
-import os
 import copy
+import os
+
 # Import functions from your existing modules
 from rna_structures import get_pairing_dict, constrained_mfe, get_base_pairs
 from io_tools import save_and_plot_structures
-from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, summary_image_per_group, compute_metrics, visualise_metrics
+from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, compute_metrics, visualise_metrics
 
 import search # Import the whole module to access its functions
 
@@ -470,48 +471,47 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
     best_overall_individual = None
     best_overall_fitness = -float('inf')
 
-    # --- NUEVA LISTA PARA ALMACENAR TODAS LAS SOLUCIONES VÁLIDAS ÚNICAS ENCONTRADAS ---
-    # Usamos un diccionario para guardar la mejor versión (por fitness) de cada secuencia completa única
+    # --- NEW LIST TO STORE ALL UNIQUE VALID SOLUTIONS FOUND ---
+    # We use a dictionary to store the best version (by fitness) of each unique complete sequence
     all_unique_valid_solutions = {}
 
-    for gen in range(generations):
+    for generation in range(generations):
         if check_stop_func and check_stop_func():
             log_func("Genetic Algorithm stopped by user request.")
             break
 
         fitness_scores = []
-        # Evaluar la población actual y también registrar las soluciones válidas
-        for ind_idx, ind in enumerate(population):
-            fit = fitness(ind, rna1_orig, rna3_orig, struct1_orig, constraint_orig, watched_positions_orig,
+        # Evaluate the current population and also record valid solutions
+        for individual_index, individual in enumerate(population):
+            fit = fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, watched_positions_orig,
                           mfe_delta, max_pairings, max_structure_changes)
             fitness_scores.append(fit)
 
-            # --- REGISTRO DE SOLUCIONES VÁLIDAS DURANTE LAS GENERACIONES ---
-            if fit > -float('inf'): # Si es una solución válida
-                seq_full_current = ind['seq']
+            # --- RECORDING VALID SOLUTIONS DURING GENERATIONS ---
+            if fit > -float('inf'):  # If it is a valid solution
+                current_full_sequence = individual['seq']
 
-                # Calcular los MFE y estructuras para este individuo (necesario para almacenar)
-                struct_unconstr_current, mfe_1_current = RNA.fold(seq_full_current)
-                struct_constr_current, mfe_2_current = constrained_mfe(seq_full_current, constraint_orig)
+                # Calculate MFEs and structures for this individual (needed for storage)
+                unconstrained_struct, mfe_1 = RNA.fold(current_full_sequence)
+                constrained_struct, mfe_2 = constrained_mfe(current_full_sequence, constraint_orig)
 
-                # Crear un dict con los datos de esta solución válida
+                # Create a dict with the data of this valid solution
                 current_solution_data = {
-                    'individual': copy.deepcopy(ind), # IMPORTANTE: copia profunda
+                    'individual': copy.deepcopy(individual),  # IMPORTANT: deep copy
                     'fitness': fit,
-                    'seq_full': seq_full_current,
-                    'struct_unconstr': struct_unconstr_current,
-                    'mfe_1': mfe_1_current,
-                    'struct_constr': struct_constr_current,
-                    'mfe_2': mfe_2_current
+                    'full_sequence': current_full_sequence,
+                    'unconstrained_structure': unconstrained_struct,
+                    'mfe_1': mfe_1,
+                    'constrained_structure': constrained_struct,
+                    'mfe_2': mfe_2
                 }
 
-                # Lógica para guardar soluciones únicas o la mejor de las duplicadas (por seq_full):
-                if seq_full_current not in all_unique_valid_solutions or \
-                   fit > all_unique_valid_solutions[seq_full_current]['fitness']:
-                    all_unique_valid_solutions[seq_full_current] = current_solution_data
+                # Logic to save unique solutions or the best of duplicates (by full_sequence):
+                if current_full_sequence not in all_unique_valid_solutions or \
+                   fit > all_unique_valid_solutions[current_full_sequence]['fitness']:
+                    all_unique_valid_solutions[current_full_sequence] = current_solution_data
                     if verbose:
-                         log_func(f"New valid solution found in Gen {gen+1}: Linker={ind['linker']}, RNA1_mut={ind['rna1_mutated']}, Fitness={fit:.2f}")
-
+                        log_func(f"New valid solution found in Gen {generation + 1}: Linker={individual['linker']}, RNA1_mut={individual['rna1_mutated']}, Fitness={fit:.2f}")
 
         scored_population = list(zip(population, fitness_scores))
         scored_population.sort(key=lambda x: x[1], reverse=True)  # Sort by fitness descending
@@ -519,10 +519,10 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
         current_best_individual, current_best_fitness = scored_population[0]
         if current_best_fitness > best_overall_fitness:
             best_overall_fitness = current_best_fitness
-            best_overall_individual = copy.deepcopy(current_best_individual) # Copia profunda para el mejor global
+            best_overall_individual = copy.deepcopy(current_best_individual) 
 
             if verbose:
-                log_func(f"\n--- New best solution found in Gen {gen+1} ---")
+                log_func(f"\n--- New best solution found in Gen {generation+1} ---")
                 log_func(f"Best fitness: {best_overall_fitness:.2f}")
                 log_func(f"Linker: {best_overall_individual['linker']}")
                 log_func(f"RNA1 mutations: {best_overall_individual['rna1_mutations_info']}")
@@ -549,12 +549,11 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
 
                 log_func(f"✅ Watched positions changed: {num_watched_pos_changed_for_diag}/{len(watched_positions_orig)}")
 
-                # *** CORRECCIÓN: Aquí se pasaban los argumentos de rna3 y linker al revés. ***
                 pairings_rna1_rna3_count_for_diag = search.count_rna1_rna3_pairings(
                     struct_full_diag,
                     best_overall_individual['rna1_mutated'],
-                    best_overall_individual['linker'],
-                    best_overall_individual['rna3']
+                    best_overall_individual['linker'], 
+                    best_overall_individual['rna3'] 
                 )
                 log_func(f"✅ RNA1-RNA3 pairings: {pairings_rna1_rna3_count_for_diag} (Max allowed: {max_pairings})")
 
@@ -571,20 +570,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 log_func(f"✅ MFE difference (MFE_ON - MFE_OFF): {mfe_diff_for_diag:.2f} (Required: > {mfe_delta})")
                 log_func("--------------------------------------------------\n")
 
-                # save_and_plot_structures para el mejor global (opcional)
-                # Puedes comentar esta llamada si no quieres generar imágenes para cada "nuevo mejor" durante la ejecución
-                # y prefieres generarlas solo para las soluciones finales retornadas.
-                save_and_plot_structures(
-                    seq=seq_diag,
-                    structure_unconstr=struct_full_diag,
-                    structure_constr=struct_constr_diag,
-                    rna1=best_overall_individual['rna1_mutated'],
-                    linker=best_overall_individual['linker'],
-                    rna3=best_overall_individual['rna3'],
-                    mut1_info=best_overall_individual['rna1_mutations_info'],
-                    mfe_1=mfe_1_diag,
-                    mfe_2=mfe_2_diag
-                )
+                
                 log_func("--------------------------------------------------")
 
         # Elitism selection
@@ -620,56 +606,32 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
         # Ensure population does not exceed max size
         population = new_population[:population_size]
 
-        if verbose and gen % 5 == 0:  # Print progress every 5 generations
+        if verbose and generation % 5 == 0:  # Print progress every 5 generations
             avg_fitness = sum(fitness_scores) / len(fitness_scores) if fitness_scores else 0
-            log_func(f"Generation {gen+1}/{generations}. Best fitness this generation: {current_best_fitness:.2f}. "
+            log_func(f"Generation {generation+1}/{generations}. Best fitness this generation: {current_best_fitness:.2f}. "
                      f"Average fitness: {avg_fitness:.2f}")
 
     # --- Collect all unique valid individuals found throughout the entire GA run ---
     # Convertir el diccionario de soluciones únicas a una lista de diccionarios
     final_solutions_to_return = list(all_unique_valid_solutions.values())
 
-    # Opcional: ordenar las soluciones finales por fitness
+    # Sort final solutions by fitness
     final_solutions_to_return.sort(key=lambda x: x['fitness'], reverse=True)
 
 
-    # --- Bloque de "Final Evaluation of Population" (última generación) ---
-    # Este bloque ahora es principalmente para logging y ver el estado de la población final.
-    # Las soluciones retornadas por la función provienen de 'all_unique_valid_solutions'.
-    log_func("\n--- Final Evaluation of Population (Last Generation) ---")
-    for i, ind in enumerate(population): # Iteramos sobre la *última* población
-        fit = fitness(ind, rna1_orig, rna3_orig, struct1_orig, constraint_orig, watched_positions_orig,
-                      mfe_delta, max_pairings, max_structure_changes)
-
-        if fit > -float('inf'):  # Valid solution
-            log_func(f"Valid solution in final population: Linker={ind['linker']}, RNA1_mut={ind['rna1_mutated']}, Fitness={fit:.2f}")
-    # --- FIN del bloque de la última población ---
+    
 
     if verbose:
         log_func("\nGenetic Algorithm Finished.")
         log_func(f"Total unique valid solutions found across all generations: {len(final_solutions_to_return)}")
 
-    # Asegúrate de que las image_paths se generen para las soluciones que vas a retornar.
-    # Se hace al final para estas soluciones seleccionadas.
-    for sol in final_solutions_to_return:
-        sol['image_paths'] = save_and_plot_structures(
-            seq=sol['seq_full'],
-            structure_unconstr=sol['struct_unconstr'],
-            structure_constr=sol['struct_constr'],
-            rna1=sol['individual']['rna1_mutated'],
-            linker=sol['individual']['linker'],
-            rna3=sol['individual']['rna3'], # Asumiendo que rna3 es constante o se accede desde 'individual'
-            mut1_info=sol['individual']['rna1_mutations_info'],
-            mfe_1=sol['mfe_1'],
-            mfe_2=sol['mfe_2']
-        )
-
     return final_solutions_to_return
 
 
+
 def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
-                                 mutable_rna1, watched_positions,
-                                 use_mutaciones=True, mfe_delta=0,
+                                 mutable_rna1, watched_positions, output_dir,
+                                 use_mutations=True, mfe_delta=0,
                                  max_pairings_rna1_rna3=5,
                                  max_structure_changes=6, num_mut=0,
                                  linker_lengths=None, 
@@ -692,7 +654,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     :param mutable_rna1: A list of 0-indexed positions in RNA1 that are allowed to mutate (list of int).
     :param watched_positions: A list of 0-indexed positions in RNA1 to check for structural changes.
                               These positions should ideally change their pairing status between the OFF and ON states (list of int).
-    :param use_mutaciones: If True, the GA will explore mutations in RNA1. Defaults to True (bool).
+    :param use_mutations: If True, the GA will explore mutations in RNA1. Defaults to True (bool).
     :param mfe_delta: The minimum required difference in MFE (MFE_ON - MFE_OFF) for a valid switch.
                       Higher values indicate a stronger switch. Defaults to 0 (float).
     :param max_pairings_rna1_rna3: Maximum allowed base pairings between RNA1 and RNA3 in the
@@ -741,7 +703,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     final_report_lines.append(f"**Constraint for ON state:** {constraint}\n")
     final_report_lines.append(f"**Mutable positions in RNA1:** {mutable_rna1}\n")
     final_report_lines.append(f"**'Watched' positions in RNA1:** {watched_positions}\n")
-    final_report_lines.append(f"**Allow mutations in RNA1:** {use_mutaciones}\n")
+    final_report_lines.append(f"**Allow mutations in RNA1:** {use_mutations}\n")
     final_report_lines.append(f"**Minimum MFE Delta:** {mfe_delta:.2f} kcal/mol\n")
     final_report_lines.append(f"**Max RNA1-RNA3 pairings:** {max_pairings_rna1_rna3}\n")
     final_report_lines.append(f"**Max RNA1 structure changes (ON state):** {max_structure_changes}\n")
@@ -793,52 +755,49 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
             all_final_results.append({
                 'linker': ind['linker'],
                 'mut1_info': ind['rna1_mutations_info'],
-                'sequence': sol['seq_full'],
-                'structure_unconstrained': sol['struct_unconstr'],
-                'structure_constrained': sol['struct_constr'],
+                'sequence': sol['full_sequence'],
+                'structure_unconstrained': sol['unconstrained_structure'],
+                'structure_constrained': sol['constrained_structure'],
                 'mfe_1': float(sol['mfe_1']),
                 'mfe_2': float(sol['mfe_2']),
                 'fitness': float(sol['fitness']),
                 # Add rna1_mutated_seq for plotting/reporting if needed by outer functions
-                'rna1_mutated_seq': sol['seq_full'][0:rna1_part_len],
-                'rna3': ind['rna3'], # Ensure rna3 is in the result for plotting functions
-                'image_paths': sol['image_paths'] 
+                'rna1_mutated_seq': sol['full_sequence'][0:rna1_part_len],
+                'rna3': ind['rna3'] # Ensure rna3 is in the result for plotting functions
             })
         # Sort results by fitness (higher is better) if desired
         all_final_results.sort(key=lambda x: x['fitness'], reverse=True)
 
-        # # ---: Save images for EVERY valid linker found ---
-        # log_func("\nSaving images for all valid linkers found by GA...")
-        # for i, res in enumerate(all_final_results):
+        # ---: Save images for EVERY valid linker found ---
+        log_func("\nSaving images for all valid linkers found by GA...")
+        for i, res in enumerate(all_final_results):
 
-        #     rna1_mutated_segment = res['sequence'][0:len(rna1)] 
+            rna1_mutated_segment = res['sequence'][0:len(rna1)] 
 
-        #     img_paths = save_and_plot_structures(
-        #             seq=res['sequence'],
-        #             structure_unconstr=res['struct_unconstr'],
-        #             structure_constr=res['struct_constr'],
-        #             rna1=best_overall_individual['rna1_mutated'],
-        #             linker=best_overall_individual['linker'],
-        #             rna3=best_overall_individual['rna3'],
-        #             mut1_info=best_overall_individual['rna1_mutations_info'],
-        #             mfe_1=mfe_1_diag,
-        #             mfe_2=mfe_2_diag)
-
-        #     best_overall_individual['image_paths'] = dict(img_paths)
-        # log_func("--------------------------------------------------")
-
-        #log_func(f"Saved images for linker: {res['linker']}")
+            save_and_plot_structures(
+                seq=res['sequence'],
+                structure_unconstr=res['structure_unconstrained'],
+                structure_constr=res['structure_constrained'],
+                rna1=rna1_mutated_segment, 
+                linker=res['linker'],
+                rna3=res['rna3'], 
+                mut1_info=res['mut1_info'],
+                mfe_1=res['mfe_1'],
+                mfe_2=res['mfe_2'],
+                folder_prefix=output_dir
+            )
+            log_func(f"Saved images for linker: {res['linker']}")
 
         final_report_lines.append(f"\n### Genetic Algorithm Results ({len(all_final_results)} Valid Linker(s) Found)\n")
         
         # Add summary of all results to the report
-        # for i, res in enumerate(all_final_results):
-        #     final_report_lines.append(f"**Result {i+1}:**\n")
-        #     final_report_lines.append(f"   Linker: {res['linker']}\n")
-        #     final_report_lines.append(f"   Fitness (MFE_ON - MFE_OFF): {res['fitness']:.2f}\n")
-        #     final_report_lines.append(f"   RNA1 Mutations: {res['mut1_info']}\n")
-        #     final_report_lines.append(f"   MFE OFF: {res['mfe_1']:.2f} kcal/mol, MFE ON: {res['mfe_2']:.2f} kcal/mol\n")
-        #     final_report_lines.append("---\n")
+        for i, res in enumerate(all_final_results):
+            final_report_lines.append(f"**Result {i+1}:**\n")
+            final_report_lines.append(f"   Linker: {res['linker']}\n")
+            final_report_lines.append(f"   Fitness (MFE_ON - MFE_OFF): {res['fitness']:.2f}\n")
+            final_report_lines.append(f"   RNA1 Mutations: {res['mut1_info']}\n")
+            final_report_lines.append(f"   MFE OFF: {res['mfe_1']:.2f} kcal/mol, MFE ON: {res['mfe_2']:.2f} kcal/mol\n")
+            final_report_lines.append("---\n")
 
         # Call clustering and plotting functions from rna_cluster and io_tools
         if len(all_final_results) > 1:
@@ -854,31 +813,16 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
             
             cluster_labels = labels
             
-            #resumen_cluster = organise_per_clusters(msa_for_cluster, estructuras_for_cluster, labels, rmsd_matrix, output_base="rna_clusters_ga_result")
-            #summary_image_per_group(output_base="rna_clusters_ga_result")
+            resumen_cluster = organise_per_clusters(msa_for_cluster, estructuras_for_cluster, labels, rmsd_matrix, output_base=f"{output_dir}/clusters")
 
-            metricas = compute_metrics(estructuras_for_cluster, tiempos=[])
-            visualise_metrics(metricas)
+            metricas = compute_metrics(estructuras_for_cluster, times=[])
+            visualise_metrics(metricas, output_dir)
         else:
-            log_func("Only one valid solution found, clustering and dendrogram plotting skipped.")
+            log_func("Only one valid solution found, clustering skipped.")
             cluster_labels = [0] if all_final_results else []
             
     else:
         log_func(f"❌ No valid linkers found by Genetic Algorithm for linker_length = {actual_linker_length_for_ga}.")
         final_report_lines.append("\nNo valid linkers were found during the Genetic Algorithm search.\n")
-    # for res in all_final_results:
-    #         img_paths = save_and_plot_structures(
-    #             seq=res['sequence'],
-    #             structure_unconstr=res['structure_unconstrained'],
-    #             structure_constr=res['structure_constrained'],
-    #             rna1=res['rna1_mutated_seq'],
-    #             linker=res['linker'],
-    #             rna3=res['rna3'],
-    #             mut1_info=res['mut1_info'],
-    #             mfe_1=res['mfe_1'],
-    #             mfe_2=res['mfe_2']
-    #         )
-    #         res['image_paths'] = img_paths
-    #         log_func(f"Saved images for linker: {res['linker']}")
 
     return all_final_results, "\n".join(final_report_lines), cluster_labels

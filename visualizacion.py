@@ -119,6 +119,8 @@ def generate_pre_command_per_sequence(msa_seq, col_categories, colors, lw):
             name = "except2"
         elif category == "always_conserved_except_4":
             name = "except4"
+        elif category == "not_paired":
+            name = "notpaired"
         else:
             name = "others"
 
