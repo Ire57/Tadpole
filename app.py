@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import traceback
 import matplotlib.pyplot as plt
+import graphviz
 import os
 import RNA
 from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters
@@ -272,7 +273,7 @@ st.markdown("""
     
      /* sidebar style*/
     [data-testid="stSidebar"] {
-        background-color: var(--sidebar-bg);
+        background-color: #0e1117;
         border-right: 1px solid var(--medium-gray);
         padding-top: 1rem;
     }
@@ -597,46 +598,47 @@ def structure_distance(s1, s2):
     return sum(a != b for a, b in zip(s1, s2))
 
 
-#Write Report
+
+
 def build_full_html_report(
-    results, 
+    results,
     report,
     rna1,
-    rna3, 
-    struct1, 
+    rna3,
+    struct1,
     constraint,
-    mutable_rna1, 
-    watched_positions, 
-    use_mutations,  
-    mfe_delta, 
-    max_pairings, 
-    max_changes, 
+    mutable_rna1,
+    watched_positions,
+    use_mutations,
+    mfe_delta,
+    max_pairings,
+    max_changes,
     num_mut,
-    linker_min, 
-    linker_max, 
-    verbose, 
+    linker_min,
+    linker_max,
+    verbose,
     cluster_labels,
     search_method,
     image_output_dir="estructura_img",
-    representative_img_bases=None 
+    representative_img_bases=None
 ):
     """
-    Builds a complete HTML report for RNA switch design results.
+    Generates a complete HTML report for RNA switch design results.
 
-    This function assembles a structured, styled HTML report summarizing 
-    the outcomes of a computational RNA switch design pipeline. It includes 
+    This function assembles a structured, styled HTML report summarizing
+    the outcomes of a computational RNA switch design pipeline. It includes
     global statistics, search parameters, result clustering, representative images,
     and automated analysis and conclusions.
 
     :param results: List of design results, each as a dictionary with relevant metrics. (list of dict)
-    :param report: Not used in this function but passed externally, possibly for future integration. (any)
+    :param report: String of the report, not used in this function. (str)
     :param rna1: RNA1 sequence string. (str)
     :param rna3: RNA3 sequence string. (str)
     :param struct1: Secondary structure of RNA1 in dot-bracket notation. (str)
     :param constraint: Constraint string used for ON state simulation. (str)
     :param mutable_rna1: List of mutable positions in RNA1. (list of int)
     :param watched_positions: List of positions to track for functional conservation. (list of int)
-    :param use_mutations: Whether mutations were allowed in RNA1 (should be renamed to `use_mutations`). (bool)
+    :param use_mutations: Whether mutations were allowed in RNA1. (bool)
     :param mfe_delta: Minimum required ΔMFE (ON–OFF energy difference). (float)
     :param max_pairings: Maximum allowed RNA1–RNA3 base pairings. (int)
     :param max_changes: Maximum allowed structural changes in RNA1. (int)
@@ -652,82 +654,58 @@ def build_full_html_report(
     :returns: A string containing the complete HTML content. (str)
     """
 
-    # Paths to your PNGs for the global plots
-    delta_uri       = png_to_data_uri(f"{image_output_dir}/delta_mfe.png")
-    pairings_uri    = png_to_data_uri(f"{image_output_dir}/pairings_count.png")
+    # Paths to your PNGs for the global plots (if they exist)
+    delta_uri = png_to_data_uri(f"{image_output_dir}/delta_mfe.png")
+    pairings_uri = png_to_data_uri(f"{image_output_dir}/pairings_count.png")
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     total_found = len(results)
+
     # Ensure total_clusters correctly counts non-noise clusters
-    total_clusters = len(set(cluster_labels)) - (1 if -1 in set(cluster_labels) else 0) if (cluster_labels is not None and len(cluster_labels) > 0) else 0
+    total_clusters = len(set(c for c in cluster_labels if c != -1)) if len(cluster_labels) > 0 else 0
 
     # Calculate global metrics
     diffs = [res['mfe_2'] - res['mfe_1'] for res in results]
-    avg_delta = sum(diffs)/len(diffs) if diffs else 0
+    avg_delta = sum(diffs) / len(diffs) if diffs else 0
     avg_pairs = sum(
         res.get('pairings_count', max_pairings) for res in results
     ) / total_found if total_found else 0
-
     
-
     # Group results by cluster
-    cluster_groups = defaultdict(list)
-    for r in results:
-        cluster = r.get('cluster')
-        if cluster is not None:
-            cluster_groups[cluster].append(r)
+    cluster_dict = defaultdict(list)
+    for idx, lbl in enumerate(cluster_labels):
+        if lbl != -1:
+            cluster_dict[lbl].append((idx, results[idx]))
 
-    linker_analysis_data = {}
+    cluster_representatives = {}
+    for cluster_id, items in sorted(cluster_dict.items()):
+        # min() devuelve la tupla (idx, res) del enlazador representativo
+        representative_tuple = min(items, key=lambda r: abs((r[1]['mfe_2'] - r[1]['mfe_1']) - mfe_delta))
+        cluster_representatives[cluster_id] = representative_tuple
 
-    for cluster, group in cluster_groups.items():
-        avg_delta = sum(r['mfe_2'] - r['mfe_1'] for r in group) / len(group)
-        avg_pairs = sum(r.get('pairings_count', 0) for r in group) / len(group)
-        avg_mfe1 = sum(r['mfe_1'] for r in group) / len(group)
-
-        pros = []
-        cons = []
-
-        # ΔMFE
-        if avg_delta > 4.0:
-            pros.append(f"Good energy difference ({avg_delta:.1f} kcal/mol)")
-        elif avg_delta < 2.0:
-            cons.append(f"Low energy difference ({avg_delta:.1f} kcal/mol)")
-        else:
-            pros.append(f"Moderate energy difference ({avg_delta:.1f} kcal/mol)")
-
-        # Pairings
-        if avg_pairs < 4:
-            pros.append("Low number of pairings between the aptamer and the RNA1 element")
-        elif avg_pairs > 6:
-            cons.append("High number of pairings between the aptamer and the RNA1 element")
-        else:
-            pros.append("Moderate pairings between the aptamer and the RNA1 element")
-
-        # OFF structure confidence
-        if avg_mfe1 < -20:
-            pros.append("High confidence on the OFF structure ensuring no readthrough")
-        elif avg_mfe1 > -10:
-            cons.append("Low confidence on the OFF structure ensuring no readthrough")
-
-        # Optional: Aptamer accessibility
-        if all('accessibility' in r for r in group):
-            avg_access = sum(r['accessibility'] for r in group) / len(group)
-            if avg_access > 0.7:
-                pros.append("Aptamer entry and binding site mostly free")
-            elif avg_access < 0.3:
-                cons.append("Aptamer entry and binding site may be hard to access")
-
-        linker_analysis_data[cluster] = {
-            "Pros": pros,
-            "Cons": cons
-        }
+    # Create a sorted list of clusters based on the delta_mfe of their representative
+    sorted_clusters_energy = sorted(
+        cluster_representatives.items(),
+        # Corrección: se usa item[1][1] para acceder al diccionario
+        # El primer [1] accede al valor (la tupla) del diccionario `cluster_representatives`.
+        # El segundo [1] accede al diccionario de resultados dentro de esa tupla.
+        key=lambda item: abs((item[1][1]['mfe_2'] - item[1][1]['mfe_1']) - mfe_delta)
+    )
+    sorted_clusters_pairings = sorted(
+        cluster_representatives.items(),
+        # Corrección: se usa item[1][1] para acceder al diccionario
+        # El primer [1] accede al valor (la tupla) del diccionario `cluster_representatives`.
+        # El segundo [1] accede al diccionario de resultados dentro de esa tupla.
+        key=lambda item: abs(count_rna1_rna3_pairings(item[1][1]['structure_unconstrained'], item[1][1]['rna1_mutated_seq'], item[1][1]['rna3'], item[1][1]['linker']) - max_pairings)
+    )
 
     # Start building the HTML
     html = f"""
     <html>
     <head>
       <meta charset="utf-8"/>
-      <style>
+      <style>/* Estilos para el modo oscuro */
+    
         body {{
           margin: 40px; font-family: sans-serif; color: #1f2937;
           white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;
@@ -754,18 +732,7 @@ def build_full_html_report(
       <div class="section">
         <h2>📚 Introduction and Objectives</h2>
         <p>In this study, we aim to convert a functional element of RNA1 (e.g., a frameshift or SCR) into a molecular "off→on" switch regulated by an aptamer (RNA2) and its ligand. This is achieved by designing a "linker" that connects RNA1 with RNA2, allowing RNA1 to toggle between an "off" (inactive) and an "on" (active) state in response to ligand binding.</p>
-        <p>The key aspects to consider for a successful ON/OFF system design are:</p>
-        <ol>
-          <li><strong>OFF State Energy:</strong> The energy of the unbound (OFF) state should be lower than that of the bound (ON) state without the ligand. Ideally, this difference should be about half the ligand binding energy, ensuring that the bound state is the most stable only when the ligand is present.</li>
-          <li><strong>RNA1-RNA3 Interactions:</strong> Pairings between the aptamer (RNA2) and the RNA1 structural element (RNA3) should not exceed a certain threshold to allow the necessary conformational change.</li>
-          <li><strong>Aptamer Entry and Binding Sites:</strong> The key entry and binding sites of the aptamer should be mostly free to enable efficient ligand binding.</li>
-          <li><strong>Disruption of the OFF State:</strong> Key nucleotides for the RNA1 structural element’s function must be identified and their functional structure disrupted in the unbound (OFF) state to ensure inactivity.</li>
-          <li><strong>Maintenance of the ON State:</strong> Structures responsible for function must be preserved in the bound (ON) state to ensure activity.</li>
-        </ol>
-        <h3>Simulation of the Bound (ON) State with RNAFold</h3>
-        <p>Since RNAFold cannot directly simulate interactions between RNA molecules or ligand binding, a constraint-based approach is used to simulate the bound (ON) state. This involves imposing known base-pairing constraints that the aptamer adopts when bound to its ligand.</p>
-        <p>In our case, less restrictive constraints were imposed to increase confidence that the resulting structure would naturally occur. Specifically, nucleotides 9, 10, and 11 of the aptamer binding site were constrained to pair only with downstream nucleotides. This simulates how, upon theophylline binding to the aptamer, these nucleotides can no longer pair with the upstream structural element (RNA1), forcing the switch to the "on" state.</p>
-      </div>
+    </div>
 
       <div class="section">
         <h2>⚙️ Search Parameters</h2>
@@ -783,53 +750,67 @@ def build_full_html_report(
         </ul>
       </div>
     """
-    #  <div class="section">
-    #    <h2>📊 Summary of Results</h2>
-    #    <p>A total of <strong>{total_found}</strong> linkers meeting the search criteria were found, grouped into <strong>{total_clusters}</strong> distinct structural clusters. The average global metrics for the solutions found are:</p>
-    #    <table class="metric-table">
-    #      <tr><th>Total linkers found</th><td>{total_found}</td></tr>
-    #      <tr><th>Total distinct clusters</th><td>{total_clusters}</td></tr>
-    #      <tr><th>Average ΔMFE (on–off)</th><td>{avg_delta:.2f} kcal/mol</td></tr>
-    #      <tr><th>Average RNA1–RNA3 pairings</th><td>{avg_pairs:.1f}</td></tr>
-    #    </table>
-    #  </div>
-#
-    #  <div class="section">
-    #    <h2>🔬 Detailed Analysis by Cluster</h2>
-    #    <p>Below is an analysis of observed pros and cons for different clusters, based on examples and design criteria:</p>
-    #    <table class="pros-cons-table">
-    #      <thead>
-    #        <tr>
-    #          <th>Cluster</th>
-    #          <th>Pros</th>
-    #          <th>Cons</th>
-    #        </tr>
-    #      </thead>
-    #      <tbody>
-    #"""
-    ## Dynamically add cluster analysis rows
-    #for length in sorted(linker_analysis_data.keys()):
-    #    data = linker_analysis_data[length]
-    #    pros_list = "".join([f"<li>{p}</li>" for p in data['Pros']])
-    #    cons_list = "".join([f"<li>{c}</li>" for c in data['Cons']])
-    #    html += f"""
-    #        <tr>
-    #          <td>{length}</td>
-    #          <td><ul>{pros_list}</ul></td>
-    #          <td><ul>{cons_list}</ul></td>
-    #        </tr>
-    #    """
 
-    html += """
-          </tbody>
+    html += f"""
+      <div class="section">
+        <h2>📊 Summary of Results</h2>
+        <p>A total of <strong>{total_found}</strong> linkers meeting the search criteria were found, grouped into <strong>{total_clusters}</strong> distinct structural clusters. The average global metrics for the solutions found are:</p>
+        <table class="metric-table">
+          <tr><th>Total linkers found</th><td>{total_found}</td></tr>
+          <tr><th>Total distinct clusters</th><td>{total_clusters}</td></tr>
+          <tr><th>Average ΔMFE (on–off)</th><td>{avg_delta:.2f} kcal/mol</td></tr>
+          <tr><th>Average RNA1–RNA3 pairings</th><td>{avg_pairs:.1f}</td></tr>
         </table>
       </div>
+
+            <div class="section">
+            <h2>🔬 Detailed Analysis by Cluster</h2>
+            <p>Below is a list of the representative sequences of all the clusters, ordered by the proximity of the representative linker's ΔMFE to the desired value ({mfe_delta:.1f} kcal/mol).
+
     """
+
+    # Dynamically add sorted cluster analysis rows
+    for cluster_id, representative_result in sorted_clusters_energy:
+        rep_delta = representative_result[1]['mfe_2'] - representative_result[1]['mfe_1']
+        html += f"""
+                Cluster {cluster_id}:{rep_delta:.2f} kcal/mol
+        """
+
+    html += f"""
+    <p>Below is a list of the representative sequences of all the clusters, ordered by the proximity of the number of pairings between the SRE and the Aptamer to the desired value ({max_pairings:.1f} ).    
+    """
+    for cluster_id, representative_result in sorted_clusters_pairings:
+        html += f"""
+                Cluster {cluster_id}:{count_rna1_rna3_pairings(representative_result[1]['structure_unconstrained'], representative_result[1]['rna1_mutated_seq'], representative_result[1]['rna3'], representative_result[1]['linker'])} 
+        """
+    html += f"""
+    <p>How to choose the best option? </p>
+    <div class="section">
+        <p>The key aspects to consider for a successful ON/OFF system design are:</p>
+        <ol>
+          <li><strong>ΔMFE:</strong> You have above a list of the representatives of each cluster sorted by how close the ΔMFE values are to the desired value (input). The best option for this feature will be the first element of the list.</li>
+          <li><strong>SRE-Aptamer Interactions:</strong> This interactions should be enough to disrupt the structure of the SRE o the OFF state, 
+          but at the same time, too many pairings could make it impossible to separate the SRE from the Aptamer. If the input value for 'Maximum number of SRE-aptamer pairings'
+           was balanced, the best option for this parameter are the top elements of the list above, as they are ordered by proximity to the input value. </li>
+          <li><strong>Aptamer Entry and Binding Sites:</strong> The key binding sites of the aptamer should be mostly free (on the OFF state) to enable efficient ligand binding.</li>
+          <li><strong>Disruption of the OFF State:</strong> Key nucleotides for the SRE's function must be identified and their functional structure disrupted in the unbound (OFF) state to ensure inactivity.</li>
+          <li><strong>Maintenance of the ON State:</strong> Structures responsible for the SRE's function must be preserved in the bound (ON) state to ensure activity.</li>
+        </ol>
+        
+      </div>
+    """
+    aptamer_uri = png_to_data_uri(f"images/aptamer_report.jpg")
+    html += f"""
+                    <div style="display:inline-block; margin-right:20px; vertical-align:top;">
+                    <p>If you are using the default aptamer (theophillyne) the binding sites are coloured in yellow in the following image: </p>
+                      <img class="img-preview" src="{aptamer_uri}" alt="Unconstrained structure - Cluster {cluster_id}" />
+                    </div>
+                    """
 
     if not results:
         html += """
       <div class="section">
-        <h2>⚠️ No Valid Results</h2>
+        <h2>⚠️ No Valid Results Found</h2>
         <p>No linker satisfying all criteria was identified. Suggestions:</p>
         <ul>
           <li>Relax the minimum ΔMFE to allow a smaller energy difference.</li>
@@ -842,51 +823,83 @@ def build_full_html_report(
     else:
         cluster_dict = defaultdict(list)
         for idx, lbl in enumerate(cluster_labels):
-            if lbl != -1:  # Exclude noise points from clusters
+            if lbl != -1:
                 cluster_dict[lbl].append((idx, results[idx]))
-
         html_sections_img = ""
         if representative_img_bases:
-            html_sections_img += f"""
-            <div class="section">
-                <h2>🖼️ Representative Structures by Cluster</h2>
-                <p>Below are visual examples of the 'off' (unconstrained) and 'on' (constrained) structures for each identified cluster.</p>
-                """
-            for i, img_base in enumerate(representative_img_bases):
-                off_uri = png_to_data_uri(f"{image_output_dir}/linker_{linker_min}/{img_base}_unconstrained_plot.png")
-                on_uri = png_to_data_uri(f"{image_output_dir}/linker_{linker_min}/{img_base}_constrained_plot.png")
+            
+            
+            cluster_dict = defaultdict(list)
+            for idx, lbl in enumerate(cluster_labels):
+                if lbl != -1:
+                    cluster_dict[lbl].append((idx, results[idx]))
 
-                html_sections_img += f"""
-                <div style="display:inline-block; margin-right:20px; vertical-align:top;">
-                  <h3>Cluster {i}</h3>
-                  <p><em>Off (unconstrained)</em></p>
-                  <img class="img-preview" src="{off_uri}" alt="Unconstrained structure - Cluster {i}" />
-                  <p><em>On (constrained)</em></p>
-                  <img class="img-preview" src="{on_uri}" alt="Constrained structure - Cluster {i}" />
-                </div>
-                """
-            html_sections_img += "</div>"
+            # Prepare a list of all clusters with their representative data
+            cluster_data = []
+            for cluster_id, items in sorted(cluster_dict.items()):
+                # Find the representative linker using your logic
+                idx, res = min(items, key=lambda r: abs((r[1]['mfe_2'] - r[1]['mfe_1']) - mfe_delta))
+
+                # Store all the necessary information in a single tuple or dictionary
+                # so we can iterate over it just once
+                cluster_data.append({
+                    'cluster_id': cluster_id,
+                    'variants_count': len(items),
+                    'representative_result': res,
+                    'image_base': res.get('filename')  # Use the filename from the representative result
+                })
+            for i, img_base in enumerate(representative_img_bases):
+                cluster_data[i]['image_base'] = img_base  # Use the filename from the representative result
+                
+            # Now, loop through the prepared data once to display everything
+            for data in cluster_data:
+                cluster_id = data['cluster_id']
+                res = data['representative_result']
+                img_base = data['image_base']
+                variants_count = data['variants_count']
+
+                html += f"""
+                    <div class="section">
+                        <h2>🧬 Cluster Details {cluster_id} — {variants_count} variants</h2>
+                        <div class="linker-box">
+                            <h3>Example Linker in Cluster {cluster_id}: <code>{res['linker']}</code></h3>
+                            <p><strong>Full Sequence (RNA1+Linker+RNA3):</strong> <code>{res['sequence']}</code></p>
+                            <p><strong>Mutations in RNA1:</strong> {res.get('mut1_info', 'N/A')}</p>
+                            <p><strong>ΔMFE (Off→On):</strong> {(res['mfe_2']-res['mfe_1']):.2f} kcal/mol —
+                              <strong>RNA1–RNA3 Pairings:</strong> {count_rna1_rna3_pairings(res['structure_unconstrained'], res['rna1_mutated_seq'], res['rna3'], res['linker'])}</p>
+                        </div>
+                    </div>
+                    """
+
+                # Check if a filename exists before trying to generate the image paths
+                if img_base:
+                    off_uri = png_to_data_uri(f"{image_output_dir}/linker_{linker_min}/{img_base}_unconstrained_plot.png")
+                    on_uri = png_to_data_uri(f"{image_output_dir}/linker_{linker_min}/{img_base}_constrained_plot.png")
+
+                    html += f"""
+                    <div style="display:inline-block; margin-right:20px; vertical-align:top;">
+                      <h3>Cluster {cluster_id}</h3>
+                      <p><em>Off (unconstrained)</em></p>
+                      <img class="img-preview" src="{off_uri}" alt="Unconstrained structure - Cluster {cluster_id}" />
+                      <p><em>On (constrained)</em></p>
+                      <img class="img-preview" src="{on_uri}" alt="Constrained structure - Cluster {cluster_id}" />
+                    </div>
+                    """
+                else:
+                    html += f"""
+                    <div style="display:inline-block; margin-right:20px; vertical-align:top;">
+                        <h3>Cluster {cluster_id}</h3>
+                        <p>No representative image was found for this cluster.</p>
+                    </div>
+                    """
+                    html_sections_img += "</div>"
 
         html += html_sections_img
 
-        for cluster_id, items in sorted(cluster_dict.items()):
-            if cluster_id == -1:
-                continue
-
-            idx, res = items[0]  # Representative example for this cluster
-
-            html += f"""
-      <div class="section">
-        <h2>🧬 Cluster Details {cluster_id} — {len(items)} variants</h2>
-        <div class="linker-box">
-          <h3>Example Linker in Cluster {cluster_id}: <code>{res['linker']}</code></h3>
-          <p><strong>Full Sequence (RNA1+Linker+RNA3):</strong> <code>{res['sequence']}</code></p>
-          <p><strong>Mutations in RNA1:</strong> {res.get('mut1_info', 'N/A')}</p>
-          <p><strong>ΔMFE (Off→On):</strong> {(res['mfe_2']-res['mfe_1']):.2f} kcal/mol — 
-              <strong>RNA1–RNA3 Pairings:</strong> {res.get('pairings_count','—')}</p>
-          </div>
-      </div>
-            """
+        
+        
+        
+            
 
         html += f"""
       <div class="section">
@@ -894,18 +907,9 @@ def build_full_html_report(
       </div>
         """
 
-    stability_ok = avg_delta >= mfe_delta
-    low_interaction = avg_pairs <= max_pairings
+    
     html += f"""
-      <div class="section">
-        <h2>🔎 Automated Conclusions</h2>
-        <ul>
-          <li><strong>Relative “off”→“on” stability (ΔMFE):</strong> {'✅ Met' if stability_ok else '❌ Insufficient'} (Average ΔMFE = {avg_delta:.2f} kcal/mol, required = {mfe_delta:.1f} kcal/mol)</li>
-          <li><strong>Limited RNA1–RNA3 Interactions:</strong> {'✅ Met' if low_interaction else '❌ Excess'} (Average pairings = {avg_pairs:.1f}, max allowed = {max_pairings})</li>
-          <li><strong>Functional integrity of RNA1 (watched positions):</strong> Verifiable in {total_found} cases. Review individual results for each watched position is recommended.</li>
-          <li><strong>Cluster diversity:</strong> {'High' if total_clusters>3 else 'Low'}. {'Multiple structural topologies identified.' if total_clusters>1 else 'A single dominant topology found.'}.</li>
-        </ul>
-      </div>
+      
 
       <div class="section">
         <h2>💡 Possible Improvements and Next Steps</h2>
@@ -913,30 +917,19 @@ def build_full_html_report(
         <ul>
           <li><strong>Adjust Search Parameters:</strong>
             <ul>
-              <li>If the number of results is low or metrics are suboptimal, try relaxing the minimum ΔMFE, reducing RNA1–RNA3 pairing restrictions, or expanding the linker length range.</li>
-              <li>For more complex systems or greater diversity, experiment by allowing more mutations in RNA1 or tuning genetic algorithm parameters (population size, generations, mutation/crossover rates).</li>
-            </ul>
-          </li>
-          <li><strong>Refine Watched Positions:</strong>
-            <ul>
-              <li>Ensure `watched_positions` cover all critical functional domains of RNA1 whose disruption/maintenance is essential for switch function. Consider adding or modifying these positions based on biological knowledge.</li>
-            </ul>
-          </li>
-          <li><strong>Experimental Validation:</strong>
-            <ul>
-              <li>Predicted designs should be experimentally validated to confirm their "off→on" behavior and ligand binding efficiency.</li>
-              <li>Consider targeted mutagenesis experiments on linkers or RNA1 to validate structural and functional predictions.</li>
+              <li>If the number of results is low or metrics are suboptimal, try relaxing the minimum ΔMFE, reducing SRE-Aptamer pairing restrictions, expanding the linker length range or adding mutations to the SRE. For the Geentic algorithm, try incrementing the population or generations</li>
+              <li>For more complex systems or greater diversity, experiment by allowing more mutations in SRE or tuning genetic algorithm parameters: greater mutation rate leads to more diversity. </li>
             </ul>
           </li>
           <li><strong>Additional Cluster Analysis:</strong>
             <ul>
-              <li>Examine representative structures and linker sequences in each cluster to identify common motifs or desirable features.</li>
-              <li>Clusters with high internal diversity or those with better average metrics may be promising candidates for testing.</li>
+              <li>The representative linker for each cluster is the one that has the ΔMFE closest to the input. </li>
+              <li>For the Genetic Algorithm, if there is low variety among clusters, consider incrementing the mutation rate and/or the population.</li>
             </ul>
           </li>
           <li><strong>Exploration of Alternative Aptamers:</strong>
             <ul>
-              <li>If performance remains suboptimal, consider using or designing aptamers with different binding or stability characteristics that may better integrate with your RNA1.</li>
+              <li>If performance remains suboptimal, consider using or designing aptamers with different binding or stability characteristics that may better integrate with your SRE.</li>
             </ul>
           </li>
         </ul>
@@ -947,6 +940,13 @@ def build_full_html_report(
     """
 
     return html
+
+
+
+
+
+
+
 
 
 def run_command(cmd):
@@ -1523,7 +1523,7 @@ def linker_finder_tab():
                 st.subheader("Genetic Algorithm Parameters")
                 ga_population_size = st.number_input(
                     label="Population Size",
-                    min_value=10, max_value=500, value=70, step=10,
+                    min_value=10, max_value=500, value=100, step=10,
                     help="Number of individuals in each generation."
                 )
                 ga_generations = st.number_input(
@@ -1633,7 +1633,7 @@ def linker_finder_tab():
                     else:
                         results = []
                         labels = []
-                        update_log("Brute force search completed. No valid linker found.")  
+                        update_log("Brute force search completed. No valid linker found. Please, consider changing some parameters")  
                 elif search_method == "Genetic Algorithm":
                     # Call the genetic algorithm wrapper function
                     with st.spinner("Searching for linkers (Genetic Algorithm)..."):
@@ -1674,7 +1674,7 @@ def linker_finder_tab():
                     else:
                         results = []
                         labels = []
-                        update_log("Genetic Algorithm search completed. No valid linker found.")                
+                        update_log("Genetic Algorithm search completed. No valid linker found. Please try again")                
                 st.session_state["results"] = results
                 st.session_state["report"] = report
                 st.session_state["cluster_labels"] = labels
@@ -1720,7 +1720,7 @@ def linker_finder_tab():
                     st.markdown(f"## Cluster {cluster_id} ({len(cluster_items)} sequences)")
 
                     # Choosing representative
-                    representative = min(cluster_items, key=lambda x: x[1]['mfe_2'])  
+                    representative = min(cluster_items, key=lambda x: abs(abs(x[1]['mfe_2']-x[1]['mfe_2']) - mfe_delta))
 
                     idx, res = representative
                     representative_img_bases.append(res['linker'])
@@ -1766,7 +1766,7 @@ def linker_finder_tab():
                 current_linker_max_for_report = linker_length_for_ga # Fixed length
 
             # This is where you generate your rich HTML report
-            html = build_full_html_report(
+            html_report_content = build_full_html_report(
                 results=st.session_state["results"],
                 report=st.session_state["report"], # Passing the raw log to be included in the HTML report
                 rna1=current_rna1_for_report,
@@ -1806,15 +1806,18 @@ def linker_finder_tab():
             
             
 
-            #pdf_path = generar_pdf_desde_html(html)
+            st.subheader("Final Report")
+            with st.expander("View Full HTML Report", expanded=True):
+                # The 'height' and 'scrolling' parameters are important for long reports
+                st.components.v1.html(html_report_content, height=800, scrolling=True)
 
-            #with open(pdf_path, "rb") as f:
-            #    st.download_button(
-            #        label="📥 Download full PDF report",
-            #        data=f.read(),
-            #        file_name="informe_linkers.pdf",
-            #        mime="application/pdf"
-            #    )
+            # 3. Add a download button for the HTML file
+            st.download_button(
+                label="Download Report as HTML",
+                data=html_report_content,
+                file_name=f"{folder}.html",
+                mime="text/html"
+            )
 
             show_all = st.checkbox("Show all linkers")
             folder = f"{folder}/linker_{len((results[0])['linker'])}"
@@ -1841,7 +1844,140 @@ def linker_finder_tab():
                         if os.path.exists(constrained_image_path):
                             st.image(constrained_image_path, caption=f"Constrained Structure for Linker {linker_for_img}")
 
+
+
 # --- Content for "Aptamers" sub-tab ---
+
+def create_ga_diagram():
+    # Crear un nuevo objeto de gráfico dirigido
+    dot = graphviz.Digraph(comment='Genetic Algorithm Workflow (Complete)')
+    dot.attr('node', shape='box', style='rounded', fontname='Helvetica')
+    dot.attr('edge', fontname='Helvetica')
+    dot.attr('graph', rankdir='TB')
+
+    # Nodos principales
+    dot.node('start', 'Start')
+    dot.node('init_pop', 'Initialize Population')
+
+    with dot.subgraph(name='cluster_main_loop') as c:
+        c.attr(label='Main Loop')
+        c.attr(style='rounded')
+        c.node('eval_fitness', 'Evaluate Fitness for each Individual')
+        c.node('store_solutions', 'Store Valid Solutions\n(Check all criteria)')
+        c.node('sel_parents', 'Select Parents (Elitism & Tournament)')
+        c.node('gen_offspring', 'Crossover & Mutation\n(Generate Offspring)')
+        c.node('next_gen', 'Form Next Generation')
+    
+    dot.node('max_gen_check', 'Maximum number of\ngenerations reached?')
+    dot.node('cluster_solutions', 'Cluster Solutions\nby Structure Similarity')
+    dot.node('generate_report', 'Generate Final Report\n& Output Files')
+    dot.node('end', 'End')
+
+    # Conexiones
+    dot.edge('start', 'init_pop')
+    dot.edge('init_pop', 'eval_fitness')
+    
+    # Bucle principal
+    dot.edge('eval_fitness', 'store_solutions')
+    dot.edge('store_solutions', 'sel_parents')
+    dot.edge('sel_parents', 'gen_offspring')
+    dot.edge('gen_offspring', 'next_gen')
+    dot.edge('next_gen', 'eval_fitness', label='Loop')
+    
+    # Salida del bucle
+    dot.edge('eval_fitness', 'max_gen_check')
+    dot.edge('max_gen_check', 'cluster_solutions', label='Yes')
+    dot.edge('max_gen_check', 'sel_parents', label='No')
+
+    # Fin del proceso
+    dot.edge('cluster_solutions', 'generate_report')
+    dot.edge('generate_report', 'end')
+
+    return dot
+
+
+def create_brute_force_diagram():
+    dot = graphviz.Digraph(comment='Brute Force Workflow')
+    dot.attr('node', shape='box')
+
+    dot.node('A', 'Start')
+    dot.node('B', 'Iterate through all Linker Lengths')
+    dot.node('C', 'Generate all possible Linker sequences')
+    dot.node('D', 'Select a Linker')
+
+    with dot.subgraph(name='cluster_1') as c:
+        c.attr(label='Evaluation Loop')
+        c.attr(style='rounded')
+        
+        c.node('E', 'Evaluate OFF-State (Unconstrained)')
+        c.node('F', 'Evaluate ON-State (Constrained)')
+        c.node('G', 'Calculate MFE Delta')
+        
+        c.edge('E', 'F')
+        c.edge('F', 'G')
+
+    dot.node('H', 'Meets all Criteria?')
+    dot.node('I', 'Store as Valid Solution')
+    dot.node('J', 'Mutations Enabled?')
+    dot.node('K', 'Try all possible RNA1 Mutations')
+    dot.node('L', 'Mfe Delta met with Mutation?')
+    dot.node('M', 'Store as Valid Solution (with Mutations)')
+
+    dot.node('N', 'All Linkers Checked?')
+    dot.node('O', 'Cluster Solutions & Generate Report')
+    dot.node('P', 'End')
+    
+    # Conexiones
+    dot.edge('A', 'B')
+    dot.edge('B', 'C')
+    dot.edge('C', 'D')
+    dot.edge('D', 'E')
+    dot.edge('G', 'H')
+    
+    dot.edge('H', 'I', label='Yes')
+    dot.edge('H', 'J', label='No')
+
+    dot.edge('J', 'K', label='Yes')
+    dot.edge('J', 'D', label='No') # Vuelve a iterar si no hay mutaciones
+
+    dot.edge('K', 'L')
+    dot.edge('L', 'M', label='Yes')
+    dot.edge('L', 'D', label='No') # Vuelve a la selección de linker
+    
+    dot.edge('M', 'D')
+    dot.edge('I', 'D') # Después de guardar, vuelve al siguiente linker
+    
+    dot.edge('D', 'N')
+    dot.edge('N', 'O', label='Yes')
+    dot.edge('O', 'P')
+    
+    dot.edge('N', 'D', label='No')
+
+    return dot
+
+
+def create_simple_workflow_diagram():
+    dot = graphviz.Digraph(comment='RNA Switch Designer Workflow')
+    dot.attr('node', shape='box', style='rounded', fontname='Helvetica', fontsize='12')
+    dot.attr('edge', fontname='Helvetica', fontsize='10')
+
+    # Nodos
+    dot.node('A', 'User Input\n(RNA1, RNA3, Constraints)')
+    dot.node('B', 'Search Algorithm\n(Brute Force or GA)')
+    dot.node('C', 'Evaluation\n(OFF/ON State, MFE Delta)')
+    dot.node('D', 'Valid Linker Found?')
+    dot.node('E', 'Final Report & Output\n(Linkers, Structures, Energies)')
+    dot.node('F', 'Download Results')
+
+    # Conexiones
+    dot.edge('A', 'B', label='User provides input')
+    dot.edge('B', 'C', label='Software runs search')
+    dot.edge('C', 'D', label='Evaluates each solution')
+    dot.edge('D', 'C', label='No', arrowhead='none', style='dashed')
+    dot.edge('D', 'E', label='Yes')
+    dot.edge('E', 'F', label='User can download')
+    
+    return dot
 
 
 def help_tab():
@@ -1877,11 +2013,12 @@ def help_tab():
         **On State:**  
            The aptamer is bound to the ligand and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state.
 
-       
+       Below you can find a diagram of the general workflow of the software. 
 
         """, unsafe_allow_html=True)
-        
-
+        col1, col2, col3 = st.columns([2.5, 4, 1])
+        with col2:
+            st.graphviz_chart(create_simple_workflow_diagram())
        
         st.markdown(
             "<h2 style='font-size:22px; margin:0 0 6px 0; color:#fdeeee;'>"
@@ -2041,11 +2178,8 @@ def help_tab():
             In this image, you can see the energy of the different configurations.  
             """)
             
-            # create 3 columns to make image central
-            col1, col2, col3 = st.columns([1, 4, 1])
-
-            with col2:
-                st.image("images/energies.png", width=750)
+            
+            st.image("images/energies.png", width=1200)
 
             st.markdown("""
             The key concept is that the binding with the ligand changes the energy of the system (in the case of the theophylline aptamer, the binding energy is -9.5 kcal/mol). Therefore, the structure of the OFF state can have a different energies depending on whether the ligand is present or not.
@@ -2191,7 +2325,7 @@ def help_tab():
 
             ---
 
-            ### ⚙️ Genetic Algorithm Parameters
+            ###  Genetic Algorithm Parameters
 
             **Population Size – How many different candidates are tested at the same time.**  
             - 🔼 **Higher** → Explores more possibilities at once, increasing chances of finding good solutions but each generation takes longer to compute.  
@@ -2220,6 +2354,18 @@ def help_tab():
             **Note:** For GA, the linker length is **fixed** and comes from the "Linker's minimum length" setting.
             """)
         
+        st.markdown("""
+            Below you can see a diagram of the two possible Search Methods (see explanation on the expander above):""")
+        st.markdown("""
+            Genetic Algorithm Workflow""")
+        col1, col2, col3 = st.columns([1, 4, 0.5])
+        with col2:
+            st.graphviz_chart(create_ga_diagram())
+        st.markdown("""
+            Brute Force implementation""")
+        col1, col2, col3 = st.columns([0.5, 4, 0.5])
+        with col2:
+            st.graphviz_chart(create_brute_force_diagram())
 
     with help_sub_tabs[1]:
         
@@ -2484,114 +2630,149 @@ def help_tab():
 #Header
 html_content = """
 <style>
-/* Primary Color Palette based on #e52920 */
-:root {
-    --bg-light-red: #fdeeee;           /* Very light red/pink for backgrounds */
-    --soft-red: #fbdad9;               /* Light red/pink for inactive elements, light card borders */
-    --medium-light-red: #f7bcbb;       /* Slightly darker pink */
-    --light-accent-red: #f28f8c;       /* Medium pink/light red for hover states */
-    --primary-red: #ea534e;            /* Adjusted to #ea534e as per new palette, was #e52920 */
-    --dark-accent-red: #e62e25;        /* Slightly darker primary red */
-    --dark-red: #e41513;               /* Darker red for button hover/active */
-    --very-dark-red: #be1818;          /* Even darker red */
-    --deep-red: #9d1915;               /* Dark red/maroon for strong accents/borders */
-    --text-darker-red: #53110e;        /* Very dark red for text/headers */
-    
-    --soft-gray: #e0e0e0;              /* Soft gray for general backgrounds/borders (kept as is) */
-    --medium-gray: #cccccc;            /* Medium gray for borders/dividers (kept as is) */
-    --dark-gray: #1a1a1a;              /* General dark text/header color (kept as is) */
-    --text-color-light: #333333;       /* Dark text on light backgrounds (kept as is) */
-    --text-color-dark: #ffffff;        /* White text on dark primary colors (kept as is) */
-    --card-bg: #ffffff;                /* White background for cards/panels (kept as is) */
-    --border-color: var(--soft-gray);  /* Default border color (kept as is) */
-    --shadow-color: rgba(0, 0, 0, 0.1); /* Subtle shadow (kept as is) */
-}
+        /* Primary Color Palette based on #e52920 */
+        :root {
+            --bg-light-red: #fdeeee;           /* Very light red/pink for backgrounds */
+            --soft-red: #fbdad9;               /* Light red/pink for inactive elements, light card borders */
+            --medium-light-red: #f7bcbb;       /* Slightly darker pink */
+            --light-accent-red: #f28f8c;       /* Medium pink/light red for hover states */
+            --primary-red: #ea534e;            /* Adjusted to #ea534e as per new palette, was #e52920 */
+            --dark-accent-red: #e62e25;        /* Slightly darker primary red */
+            --dark-red: #e41513;               /* Darker red for button hover/active */
+            --very-dark-red: #be1818;          /* Even darker red */
+            --deep-red: #9d1915;               /* Dark red/maroon for strong accents/borders */
+            --text-darker-red: #53110e;        /* Very dark red for text/headers */
+            
+            --soft-gray: #e0e0e0;              /* Soft gray for general backgrounds/borders (kept as is) */
+            --medium-gray: #cccccc;            /* Medium gray for borders/dividers (kept as is) */
+            --dark-gray: #1a1a1a;              /* General dark text/header color (kept as is) */
+            --text-color-light: #333333;       /* Dark text on light backgrounds (kept as is) */
+            --text-color-dark: #ffffff;        /* White text on dark primary colors (kept as is) */
+            --card-bg: #ffffff;                /* White background for cards/panels (kept as is) */
+            --border-color: var(--soft-gray);  /* Default border color (kept as is) */
+            --shadow-color: rgba(0, 0, 0, 0.1); /* Subtle shadow (kept as is) */
+        }
 
-/* Headers - Ensure good contrast */
-h1, h2, h3, h4, h5, h6 {
-    color: var(--text-darker-red); /* Using the darkest red for headers */
-    font-weight: 600;
-}
-h1 { 
-    font-size: 2.5em; 
-    color: var(--primary-red); /* Keep H1 primary red */
-    margin-bottom: 0.5em; 
-} 
-h2 { font-size: 2em; margin-bottom: 0.5em; }
-h3 { font-size: 1.5em; margin-bottom: 0.5em; }
+        /* Headers - Ensure good contrast */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-darker-red); /* Using the darkest red for headers */
+            font-weight: 600;
+        }
+        h1 { 
+            font-size: 2.5em; 
+            color: var(--primary-red); /* Keep H1 primary red */
+            margin-bottom: 0.5em; 
+        } 
+        h2 { font-size: 2em; margin-bottom: 0.5em; }
+        h3 { font-size: 1.5em; margin-bottom: 0.5em; }
 
 
-/* Existing styles adapted to new variables */
-.main-header {
-    padding: 2rem 1rem;
-    background-color: var(--primary-red); /* Using new light red background */
-    border-radius: 2rem;
-    text-align: center;
-    font-family: 'Poppins', sans-serif; /* Ensure 'Poppins' is imported if used, otherwise fallback */
-}
-.app-title {
-    /* This will now be controlled by the h1 style above */
-    /* font-size: 2.2rem; - Removed as h1 defines 2.5em */
-    color: var(--medium-light-red);
-    margin-bottom: 0.5rem; /* Kept for specific spacing */
-}
-.app-description, .secondary-line {
-    font-size: 1.4rem;
-    color:#000000; /* Using general dark text color */
-    margin: 0.3rem 0;
-}
-.rotating-quote {
-    font-size: 1.3rem;
-    font-style: italic;
-    margin-top: 1.2rem;
-    color: var(--text-darker-red); /* Using a lighter accent red for the quotes */
-    min-height: 2rem;
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    opacity: 1; 
-    transform: translateY(0); 
-}
-</style>
-
-<div class="main-header">
-    <div class="header-content">
-        <h1 class="app-title">TADPOLE: Build your own RNA switch.</h1>
-        <p class="app-description">Get ON/OFF systems that reprogram translation through shape, not sequence.</p>
-        <p class="secondary-line">Input your sequence. TADPOLE finds the path to control.</p>
-        <p class="rotating-quote" id="quote"></p>
-    </div>
-</div>
-
-<script>
-const quotes = [
-    "Forget promoters. Think structure.<br>The future of regulation folds differently.",
-    "What if translation was the new frontier of control?<br>Welcome to the RNA switch revolution.",
-    "Biology has always known how to self-regulate.<br>We’re just learning to speak its language.",
-    "Fast, reversible, translation-level regulation?<br>We’re already skipping limits. Join us, beyond the finish line."
-];
-let quoteIndex = 0;
-const quoteElement = document.getElementById("quote");
-
-function rotateQuote() {
-    quoteElement.style.opacity = 0;
-    quoteElement.style.transform = 'translateY(10px)'; 
-
-    setTimeout(() => {
-        quoteElement.innerHTML = quotes[quoteIndex];
-        quoteIndex = (quoteIndex + 1) % quotes.length;
+        /* Existing styles adapted to new variables */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+        }
         
-        quoteElement.style.transform = 'translateY(-10px)'; 
+        .main-header {
+            padding: 2rem 1rem;
+            background-color: var(--primary-red);
+            border-radius: 2rem;
+            text-align: center;
+        }
+        .app-title {
+            color: var(--medium-light-red);
+            margin-bottom: 0.5rem;
+        }
+        .app-description, .secondary-line {
+            font-size: 1.4rem;
+            color: #000000;
+            margin: 0.3rem 0;
+        }
+        .rotating-quote {
+            font-size: 1.3rem;
+            font-style: italic;
+            margin-top: 1.2rem;
+            color: var(--text-darker-red);
+            min-height: 2rem;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            opacity: 1; 
+            transform: translateY(0); 
+        }
 
-        setTimeout(() => {
-            quoteElement.style.opacity = 1;
-            quoteElement.style.transform = 'translateY(0)'; 
-        }, 10); 
+        /* --- RESPONSIVE STYLES --- */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            .main-header {
+                padding: 1.5rem 0.5rem;
+            }
+            .app-description, .secondary-line {
+                font-size: 1.2rem;
+            }
+            .rotating-quote {
+                font-size: 1rem;
+                min-height: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            .main-header {
+                border-radius: 1rem;
+            }
+            .app-description, .secondary-line {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-header">
+        <div class="header-content">
+            <h1 class="app-title">TADPOLE: Build your own RNA switch.</h1>
+            <p class="app-description">Get ON/OFF systems that reprogram translation through shape, not sequence.</p>
+            <p class="secondary-line">Input your sequence. TADPOLE finds the path to control.</p>
+            <p class="rotating-quote" id="quote"></p>
+        </div>
+    </div>
 
-    }, 300); 
-}
+    <script>
+        const quotes = [
+            "Forget promoters. Think structure.<br>The future of regulation folds differently.",
+            "What if translation was the new frontier of control?<br>Welcome to the RNA switch revolution.",
+            "Biology has always known how to self-regulate.<br>We’re just learning to speak its language.",
+            "Fast, reversible, translation-level regulation?<br>We’re already skipping limits. Join us, beyond the finish line."
+        ];
+        let quoteIndex = 0;
+        const quoteElement = document.getElementById("quote");
 
-rotateQuote();
-setInterval(rotateQuote, 6000); 
-</script>
+        function rotateQuote() {
+            quoteElement.style.opacity = 0;
+            quoteElement.style.transform = 'translateY(10px)'; 
+
+            setTimeout(() => {
+                quoteElement.innerHTML = quotes[quoteIndex];
+                quoteIndex = (quoteIndex + 1) % quotes.length;
+                
+                quoteElement.style.transform = 'translateY(-10px)'; 
+
+                setTimeout(() => {
+                    quoteElement.style.opacity = 1;
+                    quoteElement.style.transform = 'translateY(0)'; 
+                }, 10); 
+
+            }, 300); 
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            rotateQuote();
+            setInterval(rotateQuote, 6000); 
+        });
+    </script>
+
 """
 
 st.components.v1.html(html_content, height=350)

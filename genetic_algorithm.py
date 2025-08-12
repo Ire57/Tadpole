@@ -7,6 +7,7 @@ import os
 from rna_structures import get_pairing_dict, constrained_mfe, get_base_pairs
 from io_tools import save_and_plot_structures
 from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, compute_metrics, visualise_metrics
+from search import count_rna1_rna3_pairings, check_rna1_structure_preserved
 
 import search # Import the whole module to access its functions
 
@@ -197,7 +198,7 @@ def fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, wat
         return -float('inf')  # Maximum penalty
 
     # Check: undesired pairings between rna1 and rna3
-    pairings_rna1_rna3_count = search.count_rna1_rna3_pairings(struct_full, rna1_mutated, rna3_orig, linker)
+    pairings_rna1_rna3_count = count_rna1_rna3_pairings(struct_full, rna1_mutated, rna3_orig, linker)
     if pairings_rna1_rna3_count > max_pairings:
         return -float('inf')  # Maximum penalty
 
@@ -549,7 +550,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
 
                 log_func(f"✅ Watched positions changed: {num_watched_pos_changed_for_diag}/{len(watched_positions_orig)}")
 
-                pairings_rna1_rna3_count_for_diag = search.count_rna1_rna3_pairings(
+                pairings_rna1_rna3_count_for_diag = count_rna1_rna3_pairings(
                     struct_full_diag,
                     best_overall_individual['rna1_mutated'],
                     best_overall_individual['linker'], 
@@ -557,7 +558,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 )
                 log_func(f"✅ RNA1-RNA3 pairings: {pairings_rna1_rna3_count_for_diag} (Max allowed: {max_pairings})")
 
-                changes_rna1_in_constrained_for_diag = search.check_rna1_structure_preserved(
+                changes_rna1_in_constrained_for_diag = check_rna1_structure_preserved(
                     best_overall_individual['rna1_mutated'],
                     best_overall_individual['linker'],
                     best_overall_individual['rna3'],
@@ -764,6 +765,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
                 # Add rna1_mutated_seq for plotting/reporting if needed by outer functions
                 'rna1_mutated_seq': sol['full_sequence'][0:rna1_part_len],
                 'rna3': ind['rna3'] # Ensure rna3 is in the result for plotting functions
+                #'pairings_count' : count_rna1_rna3_pairings(sol['unconstrained_structure'], sol['full_sequence'][0:rna1_part_len], ind['rna3'], ind['linker'])
             })
         # Sort results by fitness (higher is better) if desired
         all_final_results.sort(key=lambda x: x['fitness'], reverse=True)
