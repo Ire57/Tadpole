@@ -1052,116 +1052,8 @@ def input_block(title):
 
 # ===== Pestaña principal =====
 def structural_rna_element_tab():
-    st.markdown(
-        "<h2 style='font-size:22px; margin:0 0 6px 0; color:#fdeeee;'>"
-        "What do we refer to as a Structural RNA Element (SRE)?</h2>",
-        unsafe_allow_html=True
-    )
-    with st.expander(" See details", expanded=False):
-
-
-        st.markdown("""
-        **Definition**  
-        A Structural RNA Element (SRE) is an RNA sequence region that folds into a specific secondary structure crucial for its biological function.  
-        These elements often rely on their folded conformation to regulate processes such as Stop Codon Readthrough or frameshifting.
-        """)
-
-        # Ejemplo SECIS
-        example_box("""
-        The SECIS element is an RNA structure that stimulates stop codon readthrough.  
-        Normally, translation terminates at a stop codon, releasing the protein.  
-        However, the SECIS element can cause the ribosome to skip the stop codon, resulting in a longer protein product.  
-        Its function relies entirely on its secondary structure, so by controlling this structure, we can modulate its regulatory effect.
-        """)
-
-        # Imagen centrada
-        col1, col2, col3 = st.columns([1, 4, 1])
-        with col2:
-            st.image("images/SCR.png", width=900)
-
-        st.subheader("Secondary Structure Considerations")
-        st.markdown("""
-        The SRE must have a known or predictable secondary structure, typically represented in dot-bracket notation.  
-        If an experimentally validated structure is not available, users are encouraged to predict one using established tools—**RNAfold** from the Vienna RNA Package is highly recommended.  
-        """)
-
-        # Nota especial
-        st.markdown("""
-        <div style="font-size: 1.1em; font-weight: bold; margin-top: 1rem; color: #e41513">
-        In case the SRE’s structure you aim to study is not well characterised, this software includes an evolutionary analysis using a multiple sequence alignment (MSA Tool below) to help characterise conserved structural features.
-        </div>""", unsafe_allow_html=True)
-
-        transparency_note("""
-        Note that RNAfold has certain limitations:<br>
-        - It predicts only pseudoknot-free secondary structures.<br>
-        - Complex tertiary interactions and non-canonical base pairs are not modelled.<br>
-        - Predictions are minimum free energy (MFE) approximations and may not capture all biologically relevant conformations.<br>
-        Despite these limitations, RNAfold remains one of the most comprehensive and accessible tools available for local execution.
-        """)
-
-        st.subheader("Input Requirements")
-
-        # Bloque Mutations
-        input_block("Mutations") 
-        st.markdown("""
-        This software allows the user to introduce mutations in the SRE sequence to explore functional variants.  
-        If a nucleotide involved in a base pair is mutated, its paired base is automatically mutated to a complementary one, preserving the secondary structure.""")
-        # Ejemplo imagen SECIS
-        example_box("""
-        In the SECIS element, certain positions (green) are key for promoting readthrough.  
-        As the bottom positions are not important for function, they can be mutated without disrupting activity.
-        """)
-        col1, col2, col3 = st.columns([4, 4, 1])
-        with col2:
-            st.image("images/SECIS.png", width=100)
-        st.markdown("""  
-        It is recommended to limit mutations to non-critical nucleotides to avoid compromising function.
-        """)
-
-        # Bloque Key nucleotides
-        input_block("Key Nucleotides for Function") 
-        st.markdown("""
-        The software allows specifying “watched positions”: nucleotides known to be critical for function.  
-        """)
-        example_box("""
-        In the case of the SECIS element, the green positions are key for promoting readthrough.  
-        """)
+    
         
-
-        st.markdown("""
-        Watched positions are used as functional markers:  
-        - If their structure relative to the input structure is maintained, the SRE is considered functional.  
-        - If disrupted, the SRE is considered non-functional.
-
-        <b>Hint:</b> Avoid including all key nucleotides in ‘Watched positions’.  
-        Even if one maintains pairing, the overall structure could still change.  
-        Experiment with different sets to achieve accurate results.
-        """, unsafe_allow_html=True)
-
-        # Bloque Allow changes
-        input_block("Allow Changes on SRE’s Structure") 
-        st.markdown("""
-        While certain nucleotides and structural features of an SRE are essential, others may be flexible or non-critical.  
-        This tool includes a parameter: **Maximum changes on the RNA1 structure**, defining tolerated deviation from the original structure.
-
-        - A strict value (0) means the structure must remain identical.  
-        - A higher value allows more flexibility.
-        """)
-
-        # Bloque final
-        st.markdown("""
-        <h3>Why These Inputs Matter</h3>
-        RNA-based systems are complex; small structural changes can have a big impact, but not all regions matter equally.  
-        This tool lets you define what matters most, preserving function where it counts while exploring a broad design space.
-        """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
     st.markdown("""<div style="font-size: 2.7rem; color: #ea534e; font-weight: bold; margin-top: 1rem;">
         MSA Tool:  
     </div>
@@ -1539,12 +1431,12 @@ def linker_finder_tab():
             # --- Search Method Selection ---
             search_method = st.radio(
                 "Select Search Method",
-                ("Brute Force", "Genetic Algorithm"),
+                ("Genetic Algorithm", "Brute Force"),
                 help="More information on 'Help -> Documentation'"
             )
 
             constraint = st.text_input(
-                label="Restriction chain for the RNA2 sequence",
+                label="Restriction chain for the Aptamer sequence",
                 value='........................................................................................<<<<<<<...............................',
                 placeholder="Example: ...........<<<<<............",
                 help="Restrictions for the folding of the constrained (ON) state. It must have the same " \
@@ -1566,7 +1458,7 @@ def linker_finder_tab():
                 "(from respect to the input targeted structure) will be forced to change to ensure the OFF state disrupts functionality."
             )
         
-            use_mutations = st.checkbox("Allow mutations on SRE", value=True)
+            use_mutations = st.checkbox("Allow mutations on SRE", value=False)
         
             # compute mutation rang
             mutable_set = [int(x.strip()) for x in mutable_rna1.split(",") if x.strip().isdigit()]
@@ -1604,20 +1496,20 @@ def linker_finder_tab():
         
             mfe_delta = st.number_input(
                 label="Minimum Energy difference (kcal/mol)",
-                min_value=0.0, max_value=20.0, value=0.0, step=0.1,
+                min_value=0.0, max_value=20.0, value=4.0, step=0.1,
                 help="More infromation on 'About the Parts -> System in Detail'. Difference between the energy of the constrained" \
                 "(ON) state and the unconstrained (OFF) state. It should be approximately half " \
                 "the binding energy of the aptamer–ligand interaction."
             )
             max_pairings = st.number_input(
                 label="Maximum number of SRE-aptamer pairings",
-                min_value=0, max_value=20, value=15, step=1,
+                min_value=0, max_value=20, value=10, step=1,
                 help="More infromation on 'About the Parts -> System in Detail'. Binding with the ligand can't brake many pairings. To ensure the switch's functionality, " \
                 "one should choose a low number of pairings. However, if this conditions is very restrictive, " \
                 "the ON/OFF system might not be possible to construct, and thus it is allowed to modulate this value."
             )
             max_changes = st.number_input(
-                label="Maximum changes on the SRE1 structure",
+                label="Maximum changes on the SRE structure",
                 min_value=0, max_value=20, value=6, step=1,
                 help="The input targeted structure might not need to be much restrictive, " \
                 "as maybe not the whole structure is important for functionality. Therefore " \
@@ -1631,12 +1523,12 @@ def linker_finder_tab():
                 st.subheader("Genetic Algorithm Parameters")
                 ga_population_size = st.number_input(
                     label="Population Size",
-                    min_value=10, max_value=500, value=50, step=10,
+                    min_value=10, max_value=500, value=70, step=10,
                     help="Number of individuals in each generation."
                 )
                 ga_generations = st.number_input(
                     label="Number of Generations",
-                    min_value=10, max_value=1000, value=100, step=10,
+                    min_value=10, max_value=1000, value=20, step=10,
                     help="Number of generations to run the algorithm."
                 )
                 ga_elitism_rate = st.slider(
@@ -1796,9 +1688,7 @@ def linker_finder_tab():
 
 
             if not results:
-                st.warning("No valid linkers found.")
-                st.markdown("### 📝 Summarised search report:")
-                st.text(report)
+                st.warning("No valid linkers found. If you are using the GA, please try again. If you are using Brute Force, consider changing the parameters. ")
 
         # Mostrar resultados si existen
         if "results" in st.session_state and st.session_state["results"]:
@@ -1952,249 +1842,391 @@ def linker_finder_tab():
                             st.image(constrained_image_path, caption=f"Constrained Structure for Linker {linker_for_img}")
 
 # --- Content for "Aptamers" sub-tab ---
-def aptamers_tab():
-    st.subheader("What is an Aptamer?")
-    st.write("""
-    An aptamer is a short, structured RNA (or DNA) sequence capable of binding specifically to a target molecule, usually a small ligand. Aptamers are often used as biosensors or regulatory elements in synthetic biology, particularly in riboswitches (RNA systems that regulate gene expression in response to ligand binding).
-    In these systems, the aptamer forms part of a larger RNA structure that adopts one conformation in the absence of the ligand and switches to a different conformation when the ligand is present.
-    """)
-
-    # create 3 columns to make image central
-    col1, col2, col3 = st.columns([2, 4, 1])
-
-    with col2:
-        st.image("images/aptamer.png", width=400)
-    
-    
-    st.write("""
-    Aptamers function through structure-based recognition, meaning their ability to bind the ligand depends on folding into a specific 3D shape. Therefore, preserving or engineering the aptamer’s functional conformation is critical in any synthetic RNA system.
-    """)
-
-    st.subheader("Simulating Ligand Binding in Aptamers")
-    st.write("""
-    Simulating ligand binding directly is a highly complex task, often requiring techniques like molecular dynamics or docking simulations.
-    These are not practical when screening hundreds or thousands of sequence variants in a high-throughput or exploratory context.
-    To address this, the tool implements a simplified yet effective strategy for simulating ligand binding using secondary structure constraints.
-    
-    **Structural Restriction Approach**  
-    Instead of modelling ligand–aptamer interactions directly, this parameter enforces structural constraints to mimic ligand binding.
-    Specifically, the nucleotides known to interact with the ligand are restricted from forming base pairs with upstream regions of the RNA.
-    This forces the aptamer to fold into its ligand-bound conformation, reproducing the structural effect of binding without needing to simulate the ligand itself.
-    This approach has proven sufficient for many practical applications, including recreating known aptamer conformations upon ligand binding.
-    """)
-
-    st.info("""
-    **Important Notes for Users**  
-    - If you're using a different aptamer than the default one, you must adjust this parameter based on:
-        - The length of the aptamer.
-        - The position of ligand-binding nucleotides.
-    - The user is responsible for verifying that, in the constrained structure of the design, the aptamer folds into the expected structure in the presence of the ligand.
-    """)
-
-    st.subheader("Aptamer Used in This Tool")
-    st.write("""
-    By default, the tool includes support for the theophylline aptamer, one of the most well-characterised synthetic RNA aptamers in the literature.
-    It binds the ligand with high specificity—over 10,000-fold more selective than for caffeine, a closely related molecule.
-    This aptamer has been widely studied and used in various synthetic biology applications, including riboswitches in both prokaryotic and eukaryotic systems.
-    For example, the aptamer variant used by Anzalone et al. (2016) was shown to effectively regulate frameshifting in mammalian cells, making it a strong candidate for this system.
-    The structure of the theophylline aptamer is well defined, and its binding pocket and surrounding regions are known from both experimental data (e.g., NMR, crystallography) and computational predictions (RNAfold, etc.).
-    """)
-    # create 3 columns to make image central
-    col1, col2, col3 = st.columns([1, 4, 1])
-
-    with col2:
-        st.image("images/aptamer3D.png", width=750)
-
-    st.subheader("Other Compatible Aptamers")
-    st.write("""
-    While the tool uses the theophylline aptamer by default, it is also compatible with other ligand-binding aptamers, such as:
-    - Tetracycline aptamer
-    - Warfarin aptamer
-    - Ciprofloxacin aptamer
-    """)
-
-    st.info("""
-    When using a different aptamer, be sure to:
-    - Provide the correct aptamer sequence.
-    - Check if the secondary structure of the bound configuration matches the aptamer’s structure on the constrained structure of the system.
-    - Define the “Restriction chain for the aptamer sequence” based on its ligand-binding region.
-    """)
-
-def system_detail():
-    st.header("The system in detail")
-    st.markdown("""
-     
-
-
-    ## Let’s break down how the three key parameters shape the system's functionality:
-
-    ### 1. Linker Length
-
-    <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
-    The number of nucleotides between the end of the SRE and the start of the aptamer.
-
-    <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
-    The linker physically connects the aptamer to the regulatory element. Its length influences the folding potential of the full RNA molecule in both ON and OFF states:  
-    - Too short, and it may prevent the aptamer and SRE from interacting sufficiently to form the OFF state.  
-    - Too long, and it may introduce too much flexibility or unwanted structural configurations, reducing the precision of switching.
-
-    <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
-    Find a length that allows:  
-    - Effective interaction between aptamer and SRE in the OFF state (leading to SRE disruption),  
-    - But enables SRE recovery when the aptamer is ligand-bound (ON state).  
-
-    The tool allows you to scan across a range of linker lengths to identify the most effective ones for switching behaviour.
-
-    ### 2. Minimum ΔMFE (ON-OFF Energy Difference)
-
-    <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
-    The minimum required difference in Minimum Free Energy (MFE) between the OFF and ON states. MFE is a proxy for how stable a structure is.
-
-    <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
-    You want the system to have two distinct and energetically stable conformations:  
-    - One in the absence of ligand (OFF), where the SRE is disrupted  
-    - One in the presence of ligand (ON), where the SRE folds correctly  
-
-    If both states have similar energies, the switch may not behave reliably, flipping randomly or being stuck in one state. By setting a minimum ΔMFE, you enforce a thermodynamic bias that makes switching behavior more robust and predictable.
-
-    <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
-    Ensure there's a meaningful, energetic difference between ON and OFF that reflects real structural change. This enhances the functional specificity of the switch.
-
-    In this image, you can see the energy of the different configurations.  
-    The key concept is that the binding with the ligand changes the energy of the system (in the case of the theophylline aptamer, the binding energy is -9.5 kcal/mol). Therefore, the same structure (in this case, the OFF state) can have a different energy depending on whether the ligand is present or not.
-
-    Without the ligand, we want to have the OFF state, so we want the OFF state without the ligand (central figure) to be the most stable one (and therefore have a lower energy than the ON state with the ligand, left figure). With the ligand, we want to have the ON state, so we want the ON state (left figure) to be more stable than the OFF state with the ligand (right figure) (and therefore have a lower energy).
-
-    ### 3. Maximum Number of SRE–Aptamers Pairings
-
-    <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
-    A constraint on how many base pairs are allowed to form between the SRE and the aptamer in the OFF state.
-
-    <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
-    In the OFF state, the aptamer must partially bind the SRE to prevent it from forming its active structure. However:  
-    - Too few pairings might not be enough to effectively disrupt the SRE.  
-    - Too many pairings could over-stabilise the OFF state, making the ON state hard to reach even when the ligand is present.
-
-    <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
-    Strike a balance: allow enough pairing for functional repression, but leave room for switching. This variable helps tune the strength of repression and influences whether ligand binding can successfully revert the system to the ON state.  
-    This parameter is especially useful when testing different SRE or aptamer sequences, as their pairing potential may vary significantly.
-    """, unsafe_allow_html=True)
 
 
 def help_tab():
     st.header("Help and Documentation")
     st.write("Find user guides and tutorials")
 
-    help_sub_tabs = st.tabs([" User Guide", " Documentation"])
+    help_sub_tabs = st.tabs([" User Guide", "Why build an RNA-switch"," Documentation"])
 
     # === USER GUIDE TAB ===
     with help_sub_tabs[0]:
         st.markdown("""
         <h1 style="text-align:center; margin-bottom: 0.5em;">Introduction to the RNA ON/OFF Switch Design Toolkit</h1>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <h2 style="margin-top: 1em;">How does the toolkit work?</h2>
-        <p>The web interface is divided into intuitive sections, each supporting a key part of the design process:</p>
-
-        <h3 style="margin-top: 1em; color:#4a90e2;">Model System</h3>
-        <p>The core module. It helps you explore candidate linker sequences that allow your aptamer and structural RNA to interact correctly in the OFF state, and separate correctly in the ON state (when the ligand is present).<br>
-        It simulates folding behaviour, compares energy states, and allows for visualisation of the structure of the system (ON and OFF).</p>
-
-        <h3 style="margin-top: 1em; color:#4a90e2;">About the parts</h3>
-        <h4 style="margin-top: 1em; color:#f7bcbb;"> SRE (Structural RNA Element) Analysis</h4>
-        <p>This section helps you understand SREs. It also has a tool to make an evolutionary analysis from a multi-sequence alignment (MSA), to help identify the functional regions of your structural element, relevant for the design of the system.</p>
-
-        <h4 style="margin-top: 1em; color:#f7bcbb;">Aptamer</h4>
-        <p>This section helps you understand what Aptamers are and the key concepts to have in mind.</p>
-
-        <h3 style="margin-top: 1em; color:#4a90e2;">Documentation</h3>
-        <p>All calculations are powered by <strong>RNAfold</strong>, and results are presented with plots, base-pairing histograms, energy comparisons, and automatically generated reports.</p>
-
-        <hr style="margin-top:2em; margin-bottom:2em;">
-        """ , unsafe_allow_html=True)
-        st.markdown("""
-        <h2 style="margin-top: 1em;">Main Feature: Model System</h2>
-        In short, you input your RNA element and aptamer, and the tool helps you turn them into a functional RNA switch.
-
-        RNA **ON/OFF** switches are systems that control gene expression based solely on whether a small molecule is present or not.  
-
-        The system is built from three parts:
-
-        1. **A structural RNA element (SRE)**  
-           For example, a readthrough or frameshift motif, whose function depends on its correct folding. Only with the correct structure will it perform its function.
-
-        2. **An aptamer**  
-           Binds to a small molecule (**ligand**).
-
-        3. **A linker**  
-           Connects both and controls how their structures interact.
-
-        """, unsafe_allow_html=True)
-        # Imagen centralizada con columnas
-        col1, col2, col3 = st.columns([1.5, 4, 1])
-        with col2:
-            st.image("images/system.png", width=700)
-
-        st.markdown("""
-        **In this image, you can see the ON (right) and OFF (left) states.**
-
-        - **OFF state:**  
-          The aptamer and the SRE are paired. This means the structure of the SRE is disrupted, and it will not perform its function, and therefore this is the OFF state.
-
-
-        - **ON state:**  
-          The aptamer is bound to ligand, and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state. 
-
-
-        ---
-        """)
-
         
 
-        example_box("Stop Codon Readthrough (SCR)  \nWithout SCR, translation usually ends when the ribosome encounters a Stop Codon.")
+       
+        
+        <h2 style="margin-top: 1em; color:#cf211b;">Main Feature: Model System</h2>
+        <h4 style="margin-top: 1em; color:#f7bcbb;">In short, you input your Structural RNA Element (SRE) and Aptamer, and the tool helps
+                     you turn them into a functional RNA switch. This means you can turn the function of your SRE on and off:</h4>
+     
+        
+
+        In this image, you can see the system that builds this tool, a switch with ON (right) and OFF (left) states. 
+        """, unsafe_allow_html=True)
+        # Imagen centralizada con columnas
         col1, col2, col3 = st.columns([1, 4, 1])
         with col2:
-            st.image("images/NoSCR.png", width=900)
+            st.image("images/system_img.png", width=900)
+        st.markdown("""
+        **OFF state:**  
+           The aptamer and the SRE are paired. This means the structure of the SRE is disrupted, and it will not perform its function; therefore, this is the OFF state.
+                    
+        **On State:**  
+           The aptamer is bound to the ligand and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state.
 
-        example_cont_box("However, when an SCR element is present, its structure interacts with the ribosome and makes it skip the Stop Codon, resulting in an elongated protein.")
-        col1, col2, col3 = st.columns([1, 4, 1])
-        with col2:
-            st.image("images/SCR.png", width=900)
+       
 
-        example_cont_box("To build a switch, we add an aptamer." \
-        "- In the absence of ligand: the aptamer pairs with the SCR element, disrupting its structure. The ribosome stops at the stop codon, producing only protein A." \
-        "")
-        col1, col2, col3 = st.columns([1, 4, 1])
-        with col2:
-            st.image("images/OFF.png", width=900)
+        """, unsafe_allow_html=True)
+        
 
-        example_cont_box(""
-        "- In the presence of ligand: the aptamer binds to it and forms its own structure, releasing the SCR to fold normally, stimulating readthrough and producing protein AB." \
-        "")
-        col1, col2, col3 = st.columns([1, 4, 1])
-        with col2:
-            st.image("images/ON.png", width=900)
+       
+        st.markdown(
+            "<h2 style='font-size:22px; margin:0 0 6px 0; color:#fdeeee;'>"
+            "What do we refer to as a Structural RNA Element (SRE)?</h2>",
+            unsafe_allow_html=True
+        )
+        with st.expander(" See details", expanded=False):
 
-        st.markdown("---")
+
+            st.markdown("""
+            **Definition**  
+            A Structural RNA Element (SRE) is an RNA sequence region that folds into a specific secondary structure crucial for its biological function.  
+            These elements often rely on their folded conformation to regulate processes such as Stop Codon Readthrough or frameshifting.
+            """)
+
+            # Ejemplo SECIS
+            example_box("""
+            The SECIS element is an RNA structure that stimulates stop codon readthrough.  
+            Normally, translation terminates at a stop codon, releasing the protein.  
+            However, the SECIS element can cause the ribosome to skip the stop codon, resulting in a longer protein product.  
+            Its function relies entirely on its secondary structure, so by controlling this structure, we can modulate its regulatory effect.
+            """)
+
+            # Imagen centrada
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.image("images/SCR.png", width=900)
+
+            st.subheader("Secondary Structure Considerations")
+            st.markdown("""
+            The SRE must have a known or predictable secondary structure, typically represented in dot-bracket notation.  
+            If an experimentally validated structure is not available, users are encouraged to predict one using established tools—**RNAfold** from the Vienna RNA Package is highly recommended.  
+            """)
+
+            # Nota especial
+            st.markdown("""
+            <div style="font-size: 1.1em; font-weight: bold; margin-top: 1rem; color: #e41513">
+            In case the SRE’s structure you aim to study is not well characterised, this software includes an evolutionary analysis using a multiple sequence alignment (MSA Tool below) to help characterise conserved structural features.
+            </div>""", unsafe_allow_html=True)
+
+            transparency_note("""
+            Note that RNAfold has certain limitations:<br>
+            - It predicts only pseudoknot-free secondary structures.<br>
+            - Complex tertiary interactions and non-canonical base pairs are not modelled.<br>
+            - Predictions are minimum free energy (MFE) approximations and may not capture all biologically relevant conformations.<br>
+            Despite these limitations, RNAfold remains one of the most comprehensive and accessible tools available for local execution.
+            """)
+
+
+            example_box("Stop Codon Readthrough (SCR)  \nWithout SCR, translation usually ends when the ribosome encounters a Stop Codon.")
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.image("images/NoSCR.png", width=900)
+
+            example_cont_box("However, when an SCR element is present, its structure interacts with the ribosome and makes it skip the Stop Codon, resulting in an elongated protein.")
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.image("images/SCR.png", width=900)
+
+            example_cont_box("To build a switch, we add an aptamer." \
+            "- In the absence of ligand: the aptamer pairs with the SCR element, disrupting its structure. The ribosome stops at the stop codon, producing only protein A." \
+            "")
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.image("images/OFF.png", width=900)
+
+            example_cont_box(""
+            "- In the presence of ligand: the aptamer binds to it and forms its own structure, releasing the SCR to fold normally, stimulating readthrough and producing protein AB." \
+            "")
+            col1, col2, col3 = st.columns([1, 4, 1])
+            with col2:
+                st.image("images/ON.png", width=900)
+
+        
+        
+        
+        st.markdown(
+            "<h2 style='font-size:22px; margin:0 0 6px 0; color:#fdeeee;'>"
+            "What is an Aptamer?</h2>",
+            unsafe_allow_html=True
+        )
+        with st.expander(" See details", expanded=False):
+            st.write("""
+            An aptamer is a short, structured RNA (or DNA) sequence capable of binding specifically to a target molecule, usually a small ligand. Aptamers are often used as biosensors or regulatory elements in synthetic biology, particularly in riboswitches (RNA systems that regulate gene expression in response to ligand binding).
+            In these systems, the aptamer forms part of a larger RNA structure that adopts one conformation in the absence of the ligand and switches to a different conformation when the ligand is present.
+            """)
+
+            # create 3 columns to make image central
+            col1, col2, col3 = st.columns([2, 4, 1])
+
+            with col2:
+                st.image("images/aptamer.png", width=400)
+
+
+            st.write("""
+            Aptamers function through structure-based recognition, meaning their ability to bind the ligand depends on folding into a specific 3D shape. Therefore, preserving or engineering the aptamer’s functional conformation is critical in any synthetic RNA system.
+            """)
+
+           
+            
+
+            st.subheader("Aptamer Used in This Tool")
+            st.write("""
+            By default, the tool includes support for the theophylline aptamer, one of the most well-characterised synthetic RNA aptamers in the literature.
+            It binds the ligand with high specificity—over 10,000-fold more selective than for caffeine, a closely related molecule.
+            This aptamer has been widely studied and used in various synthetic biology applications, including riboswitches in both prokaryotic and eukaryotic systems.
+            For example, the aptamer variant used by Anzalone et al. (2016) was shown to effectively regulate frameshifting in mammalian cells, making it a strong candidate for this system.
+            The structure of the theophylline aptamer is well defined, and its binding pocket and surrounding regions are known from both experimental data (e.g., NMR, crystallography) and computational predictions (RNAfold, etc.).
+            """)
+            # create 3 columns to make image central
+            col1, col2, col3 = st.columns([1, 4, 1])
+
+            with col2:
+                st.image("images/aptamer3D.png", width=750)
+
+            st.subheader("Other Compatible Aptamers")
+            st.write("""
+            While the tool uses the theophylline aptamer by default, it is also compatible with other ligand-binding aptamers, such as:
+            - Tetracycline aptamer
+            - Warfarin aptamer
+            - Ciprofloxacin aptamer
+            """)
+
+            st.info("""
+            When using a different aptamer, be sure to:
+            - Provide the correct aptamer sequence.
+            - Define the “Restriction chain for the aptamer sequence” based on its ligand-binding region.
+            - Change the Minimum ΔMFE (explanation bellow)
+            """)
+            st.subheader("Simulating Ligand Binding in Aptamers")
+            st.write("""
+            Simulating ligand binding directly is a highly complex task, often requiring techniques like molecular dynamics or docking simulations.
+            These are not practical when screening hundreds or thousands of sequence variants in a high-throughput or exploratory context.
+            To address this, the tool implements a simplified yet effective strategy for simulating ligand binding using secondary structure constraints.
+
+            **Structural Restriction Approach**  
+            Instead of modelling ligand–aptamer interactions directly, this parameter enforces structural constraints to mimic ligand binding.
+            Specifically, the nucleotides known to interact with the ligand are restricted from forming base pairs with upstream regions of the RNA.
+            This forces the aptamer to fold into its ligand-bound conformation, reproducing the structural effect of binding without needing to simulate the ligand itself.
+            This approach has proven sufficient for many practical applications, including recreating known aptamer conformations upon ligand binding.
+            
+            ### Minimum ΔMFE (ON-OFF Energy Difference)
+            In short, you need to know the energy of the binding with the ligand, and put the Minimum ΔMFE as the half of that energy. Here is why:
+            <span style="color:#1f77b4; font-weight:bold;">What is the Minimum ΔMFE?:</span>  
+            The minimum required difference in Minimum Free Energy (MFE) between the OFF and ON states. MFE is a proxy for how stable a structure is.
+
+            <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
+            You want the system to have two distinct and energetically stable conformations:  
+            - One in the absence of ligand (OFF), where the SRE is disrupted  
+            - One in the presence of ligand (ON), where the SRE folds correctly  
+
+            If both states have similar energies, the switch may not behave reliably, flipping randomly or being stuck in one state. By setting a minimum ΔMFE, you enforce a thermodynamic bias that makes switching behavior more robust and predictable.
+
+            <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
+            Ensure there's a meaningful, energetic difference between ON and OFF that reflects real structural change. This enhances the functional specificity of the switch.
+
+            In this image, you can see the energy of the different configurations.  
+            """)
+            
+            # create 3 columns to make image central
+            col1, col2, col3 = st.columns([1, 4, 1])
+
+            with col2:
+                st.image("images/energies.png", width=750)
+
+            st.markdown("""
+            The key concept is that the binding with the ligand changes the energy of the system (in the case of the theophylline aptamer, the binding energy is -9.5 kcal/mol). Therefore, the structure of the OFF state can have a different energies depending on whether the ligand is present or not.
+
+            Without the ligand, we want to have the OFF state, so we want the OFF state without the ligand (central figure) to be the most stable one (and therefore have a lower energy than the ON state with the ligand, left figure). With the ligand, we want to have the ON state, so we want the ON state (left figure) to be more stable than the OFF state with the ligand (right figure) (and therefore have a lower energy).
+
+                     """)
+            
+
+        st.markdown(
+            "<h2 style='margin-top: 1em; color:#cf211b;'>Input Requirements</h2>",
+            unsafe_allow_html=True
+        ) 
+        st.markdown("""
+            
+            #### General Key Parameters:
+            """)
+        with st.expander(" See details", expanded=False):
+            st.markdown("""
+                ### 1. Linker Length
+
+                <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
+                The number of nucleotides between the end of the SRE and the start of the aptamer.
+
+                <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
+                The linker physically connects the aptamer to the regulatory element. Its length influences the folding potential of the full RNA molecule in both ON and OFF states:  
+                - Too short, and it may prevent the aptamer and SRE from interacting sufficiently to form the OFF state.  
+                - Too long, and it may introduce too much flexibility or unwanted structural configurations, reducing the precision of switching.
+
+                <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
+                Find a length that allows:  
+                - Effective interaction between aptamer and SRE in the OFF state (leading to SRE disruption),  
+                - But enables SRE recovery when the aptamer is ligand-bound (ON state).  
+
+                The tool allows you to scan across a range of linker lengths to identify the most effective ones for switching behaviour.
+
+
+                ### 2. Maximum Number of SRE–Aptamers Pairings
+
+                <span style="color:#1f77b4; font-weight:bold;">What it is:</span>  
+                A constraint on how many base pairs are allowed to form between the SRE and the aptamer in the OFF state.
+
+                <span style="color:#ff7f0e; font-weight:bold;">Why it matters:</span>  
+                In the OFF state, the aptamer must partially bind the SRE to prevent it from forming its active structure. However:  
+                - Too few pairings might not be enough to effectively disrupt the SRE.  
+                - Too many pairings could over-stabilise the OFF state, making the ON state hard to reach even when the ligand is present.
+
+                <span style="color:#2ca02c; font-weight:bold;">Goal:</span>  
+                Strike a balance: allow enough pairing for functional repression, but leave room for switching. This variable helps tune the strength of repression and influences whether ligand binding can successfully revert the system to the ON state.  
+                This parameter is especially useful when testing different SRE or aptamer sequences, as their pairing potential may vary significantly.
+            """, unsafe_allow_html=True)
+
+            # Bloque Mutations
+            st.markdown("""
+                 ## SRE's key parameters:
+                        """, unsafe_allow_html=True)
+            input_block("Mutations") 
+            st.markdown("""
+                This software allows the user to introduce mutations in the SRE sequence to explore functional variants.  
+                If a nucleotide involved in a base pair is mutated, its paired base is automatically mutated to a complementary one, preserving the secondary structure.""")
+            # Ejemplo imagen SECIS
+            example_box("""
+                    Take the SECIS element as our SRE. The SECIS element has a certain structure (on the image bellow) that allows it to perform its function.
+                        Without that certain structure, it does not work. Not all parts of the structure are equally important, though. Certain positions (green) are key for functions.  
+                    As the bottom positions are not important for function, they can be mutated without disrupting activity.
+                    """)
+            col1, col2, col3 = st.columns([4, 4, 1])
+            with col2:
+                st.image("images/SECIS.png", width=100)
+            st.markdown("""  
+                It is recommended to limit mutations to non-critical nucleotides to avoid compromising function.
+            """)
+
+        # Bloque Key nucleotides
+        st.markdown("""
+     
+            #### Key Nucleotides for Function:
+            """)
+        with st.expander(" See details", expanded=False):
+            st.markdown("""
+                The software allows specifying “watched positions”: nucleotides known to be critical for function.  
+            """)
+            example_box("""
+                In the case of the SECIS element, the green positions are key for for function.  
+            """)
+
+
+            st.markdown("""
+                Watched positions are used as functional markers:  
+                - If their structure relative to the input structure is maintained, the SRE is considered functional.  
+                - If disrupted, the SRE is considered non-functional.
+
+                <b>Hint:</b> Avoid including all key nucleotides in ‘Watched positions’.  
+                Even if one maintains pairing, the overall structure could still change.  
+                Experiment with different sets to achieve accurate results.
+                """, unsafe_allow_html=True)
+
+            # Bloque Allow changes
+            input_block("Allow Changes on SRE’s Structure") 
+            st.markdown("""
+                While certain nucleotides and structural features of an SRE are essential, others may be flexible or non-critical.  
+                This tool includes a parameter: **Maximum changes on the RNA1 structure**, defining tolerated deviation from the original structure.
+
+                - A strict value (0) means the structure must remain identical.  
+                - A higher value allows more flexibility.
+                """)
+
+            # Bloque final
+            st.markdown("""
+                <h3>Why These Inputs Matter</h3>
+                RNA-based systems are complex; small structural changes can have a big impact, but not all regions matter equally.  
+                This tool lets you define what matters most, preserving function where it counts while exploring a broad design space.
+                """, unsafe_allow_html=True)
+
 
         st.markdown("""
-        ### What the toolkit does:  
-        This toolkit automates the design of the entire system:
-        - Searches for optimal linker sequences.
-        - Tests structural behaviour.
-        - Simulates ligand binding.
-        - Proposes concrete sequences that meet precise energetic and functional criteria.
+     
+            #### Search methods:
+            """)
+        with st.expander(" See details", expanded=False):
+            st.markdown("""
+                           
+        
+            #### Brute Force
+            This method **tries every single possible combination** to see which ones work.  
+            It is simple and guarantees you’ll find *all* possible solutions, but if there are too many combinations, it can take an extremely long time.
 
-        <p style="color:#f28f8c; font-weight:bold; font-size:1.2em; margin-top:1em;">
-        It allows researchers to build working ON/OFF systems based on any SRE and aptamer combination, not just predefined templates.
-        </p>
+            **⚠️ Important:**  
+            If you allow mutations in Brute Force, the number of possibilities grows enormously, and the search can become practically impossible to finish.  
+            If you need mutations, or the number of possibilities is high (for a long linker for example) **use the Genetic Algorithm instead**.
 
-        ---
-                    
-        <h2>What is the value?</h2>
+            ---
 
-        <h3>Unlocking RNA control beyond the old playbook</h3>
+            #### Genetic Algorithm (GA)
+            A Genetic Algorithm works a bit like **natural selection in biology**:
+            1. **Start** with a group of random possible solutions (called *population*).
+            2. **Test** each one to see how well it works (*fitness*).
+            3. **Keep** the best ones.
+            4. **Mix** them together (reproduction) and make small random changes (*mutations*) to create a new generation.
+            5. **Repeat** this process until a good solution is found.
+
+            It doesn’t try *every* possibility, but it’s much faster to find solutions when the number of possibilities is huge.
+
+            ---
+
+            ### ⚙️ Genetic Algorithm Parameters
+
+            **Population Size – How many different candidates are tested at the same time.**  
+            - 🔼 **Higher** → Explores more possibilities at once, increasing chances of finding good solutions but each generation takes longer to compute.  
+            - 🔽 **Lower** → Faster per generation, but less diversity and higher risk of getting stuck in mediocre solutions.  
+
+            **Number of Generations – How many times the process repeats.**  
+            - 🔼 **Higher** → More time for the algorithm to refine solutions, but longer total runtime.  
+            - 🔽 **Lower** → Quicker results, but solutions may be less optimised.  
+
+            **Elitism Rate – Percentage of the best candidates kept unchanged for the next round.**  
+            - 🔼 **Higher** → Keeps more top solutions, ensuring quality, but reduces exploration of new possibilities.  
+            - 🔽 **Lower** → More exploration, but may lose very good solutions along the way.  
+
+            **SRE Mutation Rate – Chance of changing each base in RNA1 during evolution.**  
+            - 🔼 **Higher** → More exploration and diversity in RNA1 sequences, but can destroy promising structures.  
+            - 🔽 **Lower** → More stability in RNA1, but less chance to discover unexpected improvements.  
+
+            **Linker Mutation Rate – Chance of changing each base in the linker.**  
+            - 🔼 **Higher** → More variation in linker sequences and potential new folding patterns, but also more instability.  
+            - 🔽 **Lower** → More structural stability, but fewer creative linker solutions.  
+
+            **Tournament Size – How many candidates compete at once before picking the winner.**  
+            - 🔼 **Higher** → Picks stronger candidates more often, speeding convergence but risking loss of diversity.  
+            - 🔽 **Lower** → Keeps more diversity, but takes longer to reach high-quality solutions.  
+
+            **Note:** For GA, the linker length is **fixed** and comes from the "Linker's minimum length" setting.
+            """)
+        
+
+    with help_sub_tabs[1]:
+        
+        st.markdown("""
+        
+
+        <h2>Unlocking RNA control beyond the old playbook</h2>
         <p>
         Synthetic biology thrives on the ability to reprogram living systems with speed, precision, and predictability.<br>
         For years, gene regulation has relied on tools like transcription factor switches, CRISPR interference, RNAi, and inducible promoters, each powerful, but each with trade-offs: transcriptional delays, off-target effects, bulky components, or hard-to-deliver inducers.<br>
@@ -2210,14 +2242,7 @@ def help_tab():
         This turns static RNA motifs into dynamic, programmable ON/OFF switches.
         </p>
 
-        <h3>From concept to working switch... in minutes</h3>
-        <p>
-        Our toolkit automates every step of the design process:<br>
-        - Smart linker selection – Finds spacer sequences that connect the aptamer and SRE, determining their folding.<br>
-        - Two-state RNA folding prediction – Models the RNA’s shape in both ON and OFF states.<br>
-        - Performance scoring – Ranks designs based on predicted stability and how well key structural features are preserved.<br>
-        - Clear, interactive results – Delivers visualisations, scores, and ready-to-test sequences with no coding required.
-        </p>
+        
         
         """ , unsafe_allow_html=True)
         
@@ -2245,60 +2270,7 @@ def help_tab():
 
         st.markdown("---")
 
-    with help_sub_tabs[1]:  # Documentation
-        st.markdown("""
-                       ## Search Methods Overview
-
-    #### Brute Force
-    This method **tries every single possible combination** to see which ones work.  
-    It is simple and guarantees you’ll find *all* possible solutions, but if there are too many combinations, it can take an extremely long time.
-
-    **⚠️ Important:**  
-    If you allow mutations in Brute Force, the number of possibilities grows enormously, and the search can become practically impossible to finish.  
-    If you need mutations, or the number of possibilities is high (for a long linker for example) **use the Genetic Algorithm instead**.
-
-    ---
-
-    #### Genetic Algorithm (GA)
-    A Genetic Algorithm works a bit like **natural selection in biology**:
-    1. **Start** with a group of random possible solutions (called *population*).
-    2. **Test** each one to see how well it works (*fitness*).
-    3. **Keep** the best ones.
-    4. **Mix** them together (reproduction) and make small random changes (*mutations*) to create a new generation.
-    5. **Repeat** this process until a good solution is found.
-
-    It doesn’t try *every* possibility, but it’s much faster to find solutions when the number of possibilities is huge.
-
-    ---
-
-    ### ⚙️ Genetic Algorithm Parameters
-
-    **Population Size – How many different candidates are tested at the same time.**  
-    - 🔼 **Higher** → Explores more possibilities at once, increasing chances of finding good solutions but each generation takes longer to compute.  
-    - 🔽 **Lower** → Faster per generation, but less diversity and higher risk of getting stuck in mediocre solutions.  
-
-    **Number of Generations – How many times the process repeats.**  
-    - 🔼 **Higher** → More time for the algorithm to refine solutions, but longer total runtime.  
-    - 🔽 **Lower** → Quicker results, but solutions may be less optimised.  
-
-    **Elitism Rate – Percentage of the best candidates kept unchanged for the next round.**  
-    - 🔼 **Higher** → Keeps more top solutions, ensuring quality, but reduces exploration of new possibilities.  
-    - 🔽 **Lower** → More exploration, but may lose very good solutions along the way.  
-
-    **SRE Mutation Rate – Chance of changing each base in RNA1 during evolution.**  
-    - 🔼 **Higher** → More exploration and diversity in RNA1 sequences, but can destroy promising structures.  
-    - 🔽 **Lower** → More stability in RNA1, but less chance to discover unexpected improvements.  
-
-    **Linker Mutation Rate – Chance of changing each base in the linker.**  
-    - 🔼 **Higher** → More variation in linker sequences and potential new folding patterns, but also more instability.  
-    - 🔽 **Lower** → More structural stability, but fewer creative linker solutions.  
-
-    **Tournament Size – How many candidates compete at once before picking the winner.**  
-    - 🔼 **Higher** → Picks stronger candidates more often, speeding convergence but risking loss of diversity.  
-    - 🔽 **Lower** → Keeps more diversity, but takes longer to reach high-quality solutions.  
-
-    **Note:** For GA, the linker length is **fixed** and comes from the "Linker's minimum length" setting.
-    """)
+    with help_sub_tabs[2]:  # Documentation
         st.header("Modules and Functions Documentation")
 
         st.subheader("conservation.py")
@@ -2630,24 +2602,21 @@ with st.sidebar:
     st.header("TADPOLE")
     selected_main_tab = st.radio(
         "Navegation",
-        ["Model System", "About the Parts", "Help"],
-        index=2 # default: "Model System"
+        ["Tools", "Help"],
+        index=1 # default: "Model System"
     )
 
 # Main content (acoding to sidebar selection)
 if selected_main_tab == "Help":
     help_tab()
-elif selected_main_tab == "About the Parts":
+elif selected_main_tab == "Tools":
 
-    about_parts_sub_tabs = st.tabs(["Structural RNA element", "Aptamers", 'System in Detail'])
+    tools_sub_tabs = st.tabs(["Model System", "Structural RNA element"])
 
-    with about_parts_sub_tabs[0]: # "structural RNA element"
+    with tools_sub_tabs[0]: # "Model system"
+        linker_finder_tab() 
+    with tools_sub_tabs[1]: # "structural RNA element"
         structural_rna_element_tab() 
 
-    with about_parts_sub_tabs[1]: # "Aptamers"
-        aptamers_tab()
-    with about_parts_sub_tabs[2]: # "Aptamers"
-        system_detail()
-elif selected_main_tab == "Model System":
-    linker_finder_tab()
+   
 
