@@ -8,3 +8,4 @@ weasyprint
 biopython
 scikit-learn
 graphviz
+RNA
