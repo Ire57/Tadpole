@@ -4,7 +4,6 @@ import traceback
 import matplotlib.pyplot as plt
 import graphviz
 import os
-import RNA
 from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters
 from rna_cluster import compute_metrics, visualise_metrics
 from input_utils import parse_fasta_msa
@@ -2800,4 +2799,5 @@ elif selected_main_tab == "Tools":
         structural_rna_element_tab() 
 
    
+
 
