@@ -1,11 +1,10 @@
-streamlit
+viennarna
+weasyprint
 Pillow
 IPython
 numpy
 scipy
 matplotlib
-weasyprint
 biopython
 scikit-learn
 graphviz
-RNA
