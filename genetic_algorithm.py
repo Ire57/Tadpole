@@ -36,22 +36,22 @@ def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, 
     Initializes a population of individuals for the Genetic Algorithm.
 
     Each individual in the population represents a candidate RNA switch design,
-    structured as a dictionary containing its full sequence, mutated RNA1 segment,
-    linker sequence, RNA3 segment, and a record of RNA1 mutations. This function
+    structured as a dictionary containing its full sequence, mutated SRE segment,
+    linker sequence, Aptamer segment, and a record of SRE mutations. This function
     introduces initial diversity by applying a small rate of random mutations
-    to the RNA1 segment (only at allowed positions) and generating random linker sequences.
-    If an RNA1 base is mutated and it's part of a pair in the original RNA1 structure,
+    to the SRE segment (only at allowed positions) and generating random linker sequences.
+    If an SRE base is mutated and it's part of a pair in the original SRE structure,
     its complementary base is also mutated to attempt to preserve pairing potential.
 
-    :param rna1_orig: The original, unmutated RNA1 sequence (str).
-    :param rna3_orig: The original RNA3 sequence (str).
+    :param rna1_orig: The original, unmutated SRE sequence (str).
+    :param rna3_orig: The original Aptamer sequence (str).
     :param linker_length: The desired fixed length for the linker sequences
                           generated for each individual (int).
     :param population_size: The total number of individuals to generate
                             for the initial population (int).
-    :param mutable_positions_rna1: A list of 0-indexed positions in RNA1 where
+    :param mutable_positions_rna1: A list of 0-indexed positions in SRE where
                                    mutations are allowed during initialization and evolution (list of int).
-    :param struct1_orig: The dot-bracket structure of the original RNA1. Used to identify
+    :param struct1_orig: The dot-bracket structure of the original SRE. Used to identify
                          complementary base pairs for coordinated mutations during initialization (str).
 
     :returns: A list of dictionaries, where each dictionary represents a newly
@@ -60,7 +60,7 @@ def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, 
     population = []
     bases = ['A', 'U', 'G', 'C']
     
-    # Get pair table for original RNA1 structure to guide complementary mutations
+    # Get pair table for original SRE structure to guide complementary mutations
     # Assuming get_pair_table is a helper function that calls RNA.ptable
     pt_rna1_orig = RNA.ptable(struct1_orig) # Using RNA.ptable directly as per previous examples
 
@@ -69,9 +69,9 @@ def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, 
 
     for _ in range(population_size):
         current_rna1_list = list(rna1_orig)
-        mutations_info = [] # To store information about mutations applied in rna1
+        mutations_info = [] # To store information about mutations applied in SRE
         
-        # Apply initial random mutations to RNA1 only at allowed mutable positions
+        # Apply initial random mutations to SRE only at allowed mutable positions
         for pos_in_rna1 in mutable_positions_rna1:
             if random.random() < initial_rna1_mutation_rate:
                 old_base = current_rna1_list[pos_in_rna1]
@@ -106,10 +106,10 @@ def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, 
 
         individual = {
             'seq': full_seq,
-            'rna1_mutated': mutated_rna1_seq, # The rna1 sequence with applied mutations
+            'rna1_mutated': mutated_rna1_seq, # The SRE sequence with applied mutations
             'linker': linker_seq,
             'rna3': rna3_orig, # rna3 original, not mutated
-            'rna1_mutations_info': mutations_info # Information about the mutations in rna1
+            'rna1_mutations_info': mutations_info # Information about the mutations in SRE
         }
         population.append(individual)
     return population
@@ -126,13 +126,13 @@ def fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, wat
     on the thermodynamic efficiency of the switch.
 
     The criteria include:
-    1.  **Watched Positions Change:** Ensures that specified positions in RNA1 change their
+    1.  **Watched Positions Change:** Ensures that specified positions in SRE change their
         pairing status (paired vs. unpaired) OR their **pairing partner** when folded into the
-        unconstrained (OFF) state, compared to the original RNA1 structure. This is crucial
+        unconstrained (OFF) state, compared to the original SRE structure. This is crucial
         for the switch mechanism. All watched positions must demonstrate such a change.
-    2.  **Minimizing RNA1-RNA3 Pairings:** Limits undesired base pairings between the RNA1
-        and RNA3 segments in the unconstrained (OFF) state, which could interfere with the switch.
-    3.  **RNA1 Structure Preservation (ON State):** Assesses how well the RNA1 segment maintains
+    2.  **Minimizing SRE-Aptamer Pairings:** Limits undesired base pairings between the SRE
+        and Aptamer segments in the unconstrained (OFF) state, which could interfere with the switch.
+    3.  **SRE Structure Preservation (ON State):** Assesses how well the SRE segment maintains
         its desired structure when the full construct is folded under a specific constraint
         (representing the "ON" state). Significant deviations are penalized.
     4.  **MFE Delta Condition:** Requires a sufficient thermodynamic energy difference
@@ -141,25 +141,25 @@ def fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, wat
 
     :param individual: A dictionary representing the individual (candidate RNA switch) to be evaluated.
                        Must contain 'seq' (full RNA sequence), 'linker', and 'rna1_mutated' keys (dict).
-    :param rna1_orig: The original, unmutated RNA1 sequence. Used for context in evaluations (str).
+    :param rna1_orig: The original, unmutated SRE sequence. Used for context in evaluations (str).
     :param rna3_orig: The original RNA3 sequence. Used for constructing the full sequence and
-                      evaluating RNA1-RNA3 pairings (str).
-    :param struct1_orig: The dot-bracket structure of the original RNA1 sequence. Used as a
+                      evaluating SRE-Aptamer pairings (str).
+    :param struct1_orig: The dot-bracket structure of the original SRE sequence. Used as a
                          reference for evaluating changes in 'watched_positions_orig' and
                          'max_structure_changes' in the ON state (str).
     :param constraint_orig: The dot-bracket constraint string used to guide the folding of the
                             full RNA sequence towards the desired "ON" state (str).
-    :param watched_positions_orig: A list of 0-indexed positions within RNA1 that are specifically
+    :param watched_positions_orig: A list of 0-indexed positions within SRE that are specifically
                                    monitored to ensure they undergo a structural change
                                    (paired to unpaired, or vice-versa, or change partner) in the OFF state (list of int).
     :param mfe_delta: The minimum acceptable energy difference (MFE_ON - MFE_OFF) in kcal/mol.
                       A higher value indicates a more thermodynamically stable switch (float).
-    :param max_pairings: The maximum number of allowed base pairs between the RNA1 and RNA3
+    :param max_pairings: The maximum number of allowed base pairs between the SRE and Aptamer
                          segments in the unconstrained (OFF) state. Exceeding this leads to a
                          disqualified individual (int).
     :param max_structure_changes: The maximum allowed number of character differences between
-                                  the RNA1 sub-structure within the constrained (ON) state
-                                  and the original RNA1 structure. Exceeding this leads to a
+                                  the SRE sub-structure within the constrained (ON) state
+                                  and the original SRE structure. Exceeding this leads to a
                                   disqualified individual (int).
 
     :returns: The fitness value of the individual (float). Returns `-float('inf')` if the
@@ -197,7 +197,7 @@ def fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, wat
     if len(watched_positions_orig) > 0 and num_watched_pos_changed < len(watched_positions_orig):
         return -float('inf')  # Maximum penalty
 
-    # Check: undesired pairings between rna1 and rna3
+    # Check: undesired pairings between SRE and Aptamer
     pairings_rna1_rna3_count = count_rna1_rna3_pairings(struct_full, rna1_mutated, rna3_orig, linker)
     if pairings_rna1_rna3_count > max_pairings:
         return -float('inf')  # Maximum penalty
@@ -205,7 +205,7 @@ def fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, wat
     # Step 2: Constrained folding (ON state)
     struct_constr, mfe_2 = constrained_mfe(seq_full, constraint_orig)
 
-    # Check: preservation of original rna1 structure under constraint
+    # Check: preservation of original SRE structure under constraint
     changes_rna1_in_constrained = search.check_rna1_structure_preserved(rna1_mutated, linker, rna3_orig, struct_constr, struct1_orig)
     if changes_rna1_in_constrained > max_structure_changes:
         return -float('inf')  # Maximum penalty
@@ -265,38 +265,38 @@ def select_tournament(population, fitness_scores, tournament_size=3):
 
 def mutate(individual, rna1_orig_seq, struct1_orig, mutable_positions_rna1, linker_length, mutation_rate_rna1=0.02, mutation_rate_linker=0.05):
     """
-    Applies random mutations to an RNA switch individual's RNA1 and linker segments.
+    Applies random mutations to an RNA switch individual's SRE and linker segments.
 
-    Mutations in RNA1 are applied **only at specified mutable positions**. If a mutated base
-    is part of a canonical pair in the original RNA1 structure, an attempt is made
+    Mutations in SRE are applied **only at specified mutable positions**. If a mutated base
+    is part of a canonical pair in the original SRE structure, an attempt is made
     to mutate its complementary partner as well, aiming to **preserve pairing potential**.
     Linker mutations are applied randomly across its entire length.
 
     :param individual: A dictionary representing the individual to be mutated. It must contain
-                       'rna1_mutated' (current RNA1 sequence), 'linker' (current linker sequence),
-                       'rna3' (RNA3 sequence), and 'rna1_mutations_info' (list of past RNA1 mutations) keys (dict).
-    :param rna1_orig_seq: The original, unmutated RNA1 sequence. Used for checking bounds
-                          and ensuring consistent RNA1 length (str).
-    :param struct1_orig: The dot-bracket structure of the original RNA1. This is crucial for
+                       'rna1_mutated' (current SRE sequence), 'linker' (current linker sequence),
+                       'rna3' (RNA3 sequence), and 'SRE_mutations_info' (list of past SRE mutations) keys (dict).
+    :param rna1_orig_seq: The original, unmutated SRE sequence. Used for checking bounds
+                          and ensuring consistent SRE length (str).
+    :param struct1_orig: The dot-bracket structure of the original SRE. This is crucial for
                          identifying complementary base pairs to perform coordinated mutations (str).
-    :param mutable_positions_rna1: A list of 0-indexed positions within RNA1 where mutations
+    :param mutable_positions_rna1: A list of 0-indexed positions within SRE where mutations
                                    are permitted. Mutations will only occur at these specified indices (list of int).
     :param linker_length: The fixed length of the linker segment. Used to iterate through
                           linker positions for mutation (int).
     :param mutation_rate_rna1: The probability (per mutable base) that a mutation occurs
-                               at a given position in RNA1. Defaults to 0.02 (float).
+                               at a given position in SRE. Defaults to 0.02 (float).
     :param mutation_rate_linker: The probability (per base) that a mutation occurs at a
                                  given position in the linker. Defaults to 0.05 (float).
 
     :returns: A new dictionary representing the mutated individual. This includes the
-              updated full sequence ('seq'), mutated RNA1 ('rna1_mutated'), mutated linker ('linker'),
-              unchanged RNA3 ('rna3'), and an updated record of RNA1 mutations ('rna1_mutations_info') (dict).
+              updated full sequence ('seq'), mutated SRE ('rna1_mutated'), mutated linker ('linker'),
+              unchanged RNA3 ('rna3'), and an updated record of SRE mutations ('rna1_mutations_info') (dict).
     """
     mutated_rna1_list = list(individual['rna1_mutated'])
     current_linker_list = list(individual['linker'])
     bases = ['A', 'U', 'G', 'C']
     
-    # Get pair table for the original RNA1 structure to guide complementary mutations
+    # Get pair table for the original SRE structure to guide complementary mutations
     # This uses ViennaRNA's 1-based indexing for pairs (0 if unpaired).
     pt_rna1_orig = get_pair_table(struct1_orig) 
     
@@ -304,8 +304,8 @@ def mutate(individual, rna1_orig_seq, struct1_orig, mutable_positions_rna1, link
     # This ensures that all mutations are tracked, not just those from the current step.
     new_rna1_mutations_info = list(individual['rna1_mutations_info']) 
 
-    # --- Mutate RNA1 ---
-    # Iterate only through the explicitly allowed mutable positions in RNA1
+    # --- Mutate SRE ---
+    # Iterate only through the explicitly allowed mutable positions in SRE
     for pos_in_rna1 in mutable_positions_rna1:
         if random.random() < mutation_rate_rna1:
             old_base = mutated_rna1_list[pos_in_rna1]
@@ -314,8 +314,8 @@ def mutate(individual, rna1_orig_seq, struct1_orig, mutable_positions_rna1, link
             mutated_rna1_list[pos_in_rna1] = new_base
             new_rna1_mutations_info.append((pos_in_rna1, old_base, new_base))
             
-            # --- Mutate the complementary base if it exists and is part of a pair in the original RNA1 structure ---
-            # Retrieve the 1-based index of the paired position from the original RNA1 structure's pair table
+            # --- Mutate the complementary base if it exists and is part of a pair in the original SRE structure ---
+            # Retrieve the 1-based index of the paired position from the original SRE structure's pair table
             paired_pos_1_based = pt_rna1_orig[pos_in_rna1 + 1] 
             
             # Check if 'pos_in_rna1' is indeed paired in the original structure (paired_pos_1_based != 0)
@@ -354,9 +354,9 @@ def mutate(individual, rna1_orig_seq, struct1_orig, mutable_positions_rna1, link
     new_individual = individual.copy()
     new_individual['rna1_mutated'] = mutated_rna1_seq
     new_individual['linker'] = mutated_linker_seq
-    # Reconstruct the full sequence with the newly mutated RNA1 and linker
+    # Reconstruct the full sequence with the newly mutated SRE and linker
     new_individual['seq'] = new_individual['rna1_mutated'] + new_individual['linker'] + new_individual['rna3']
-    new_individual['rna1_mutations_info'] = new_rna1_mutations_info # Update the RNA1 mutations record
+    new_individual['rna1_mutations_info'] = new_rna1_mutations_info # Update the SRE mutations record
 
     return new_individual
 
@@ -366,20 +366,20 @@ def crossover(parent1, parent2, rna1_length, linker_length):
     Performs a single-point crossover operation between two parent RNA switch individuals.
 
     This function generates two new child individuals by exchanging segments of their linker
-    sequences. The RNA1 (mutated) and RNA3 sequences of each child are inherited directly
+    sequences. The SRE (mutated) and RNA3 sequences of each child are inherited directly
     from their respective parents without modification during this operation.
 
     :param parent1: A dictionary representing the first parent individual. It should contain at
                     least 'linker', 'rna1_mutated', 'rna3', and 'rna1_mutations_info' keys (dict).
     :param parent2: A dictionary representing the second parent individual, with the same structure as parent1 (dict).
-    :param rna1_length: The length of the RNA1 segment. This parameter is used to correctly
+    :param rna1_length: The length of the SRE segment. This parameter is used to correctly
                         handle sequence construction, though not directly for crossover logic itself (int).
     :param linker_length: The length of the linker segment. This is crucial for determining
                           valid crossover points (int).
 
     :returns: A tuple containing two dictionaries, each representing a newly generated child individual.
-              Each child dictionary includes its full sequence ('seq'), inherited mutated RNA1 ('rna1_mutated'),
-              the new linker ('linker'), inherited RNA3 ('rna3'), and RNA1 mutation information ('rna1_mutations_info'). (tuple of dict)
+              Each child dictionary includes its full sequence ('seq'), inherited mutated SRE ('rna1_mutated'),
+              the new linker ('linker'), inherited RNA3 ('rna3'), and SRE mutation information ('rna1_mutations_info'). (tuple of dict)
     """
     
     linker1 = list(parent1['linker'])
@@ -401,7 +401,7 @@ def crossover(parent1, parent2, rna1_length, linker_length):
         'rna1_mutated': parent1['rna1_mutated'],
         'linker': ''.join(child1_linker),
         'rna3': parent1['rna3'],
-        'rna1_mutations_info': parent1['rna1_mutations_info']  # RNA1 mutation info comes from the parent
+        'rna1_mutations_info': parent1['rna1_mutations_info']  # SRE mutation info comes from the parent
     }
     child2 = {
         'seq': child2_seq,
@@ -427,13 +427,13 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
     defined fitness function. It aims to find RNA linker sequences and RNA1 mutations
     that satisfy specific structural and thermodynamic criteria for a functional switch.
 
-    :param rna1_orig: The original RNA1 sequence (str).
+    :param rna1_orig: The original SRE sequence (str).
     :param rna3_orig: The RNA3 sequence (str).
-    :param struct1_orig: The original dot-bracket structure of RNA1 (representing the OFF state) (str).
-    :param constraint_orig: The dot-bracket constraint for the RNA1 + linker + RNA3 sequence
+    :param struct1_orig: The original dot-bracket structure of SRE (representing the OFF state) (str).
+    :param constraint_orig: The dot-bracket constraint for the SRE + linker + RNA3 sequence
                             to guide the folding towards the desired ON state (str).
-    :param mutable_positions_rna1: A list of 0-indexed positions in RNA1 where mutations are allowed during GA evolution (list of int).
-    :param watched_positions_orig: A list of 0-indexed positions in RNA1 that must undergo
+    :param mutable_positions_rna1: A list of 0-indexed positions in SRE where mutations are allowed during GA evolution (list of int).
+    :param watched_positions_orig: A list of 0-indexed positions in SRE that must undergo
                                    a change in their pairing status between the OFF and ON states (list of int).
     :param population_size: The number of individuals (candidate designs) in each generation of the GA. Defaults to 50 (int).
     :param generations: The total number of generations the genetic algorithm will run. Defaults to 100 (int).
@@ -442,11 +442,11 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                           that are directly carried over to the next generation without modification. Defaults to 0.1 (float).
     :param mfe_delta: The minimum required difference in MFE (MFE_ON - MFE_OFF) for a
                       valid switch, used within the fitness function. Defaults to 0 (float).
-    :param max_pairings: The maximum allowed number of base pairings between RNA1 and RNA3 in the
+    :param max_pairings: The maximum allowed number of base pairings between SRE and RNA3 in the
                           unconstrained (OFF) state, used within the fitness function. Defaults to 5 (int).
-    :param max_structure_changes: The maximum allowed number of changes in the RNA1 sub-structure within the
+    :param max_structure_changes: The maximum allowed number of changes in the SRE sub-structure within the
                                    constrained (ON) state compared to its original structure, used within the fitness function. Defaults to 6 (int).
-    :param mutation_rate_rna1: The probability of a single nucleotide mutation occurring in the RNA1 segment
+    :param mutation_rate_rna1: The probability of a single nucleotide mutation occurring in the SRE segment
                                of an individual during the mutation phase. Defaults to 0.02 (float).
     :param mutation_rate_linker: The probability of a single nucleotide mutation occurring in the linker segment
                                   of an individual during the mutation phase. Defaults to 0.05 (float).
@@ -460,7 +460,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
 
     :returns: A list of dictionaries, where each dictionary represents a valid RNA switch solution
               found within the final population. Each dictionary includes the 'individual' data
-              (linker, RNA1 mutations), its 'fitness', the 'seq_full', 'struct_unconstr', 'mfe_1',
+              (linker, SRE mutations), its 'fitness', the 'seq_full', 'struct_unconstr', 'mfe_1',
               'struct_constr', and 'mfe_2'.
     """
     if log_func is None:
@@ -526,7 +526,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                 log_func(f"\n--- New best solution found in Gen {generation+1} ---")
                 log_func(f"Best fitness: {best_overall_fitness:.2f}")
                 log_func(f"Linker: {best_overall_individual['linker']}")
-                log_func(f"RNA1 mutations: {best_overall_individual['rna1_mutations_info']}")
+                log_func(f"SRE mutations: {best_overall_individual['rna1_mutations_info']}")
 
                 # --- DIAGNOSTIC OF BEST SOLUTION BEFORE PLOTTING ---
                 log_func("\n--- Diagnostic of the BEST SOLUTION before plotting ---")
@@ -556,7 +556,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                     best_overall_individual['linker'], 
                     best_overall_individual['rna3'] 
                 )
-                log_func(f"✅ RNA1-RNA3 pairings: {pairings_rna1_rna3_count_for_diag} (Max allowed: {max_pairings})")
+                log_func(f"✅ SRE-Aptamer pairings: {pairings_rna1_rna3_count_for_diag} (Max allowed: {max_pairings})")
 
                 changes_rna1_in_constrained_for_diag = check_rna1_structure_preserved(
                     best_overall_individual['rna1_mutated'],
@@ -565,7 +565,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                     struct_constr_diag,
                     struct1_orig
                 )
-                log_func(f"✅ RNA1 changes (ON state): {changes_rna1_in_constrained_for_diag} (Max allowed: {max_structure_changes})")
+                log_func(f"✅ SRE changes (ON state): {changes_rna1_in_constrained_for_diag} (Max allowed: {max_structure_changes})")
 
                 mfe_diff_for_diag = mfe_2_diag - mfe_1_diag
                 log_func(f"✅ MFE difference (MFE_ON - MFE_OFF): {mfe_diff_for_diag:.2f} (Required: > {mfe_delta})")
@@ -647,20 +647,20 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     parameters, initiating the GA run, processing its results, saving all found
     valid designs, and generating a comprehensive report with optional structural clustering.
 
-    :param rna1: The original RNA1 sequence (str).
+    :param rna1: The original SRE sequence (str).
     :param rna3: The RNA3 sequence (str).
-    :param struct1: The original dot-bracket structure of RNA1 (representing the OFF state) (str).
-    :param constraint: The dot-bracket constraint for the RNA1 + linker + RNA3 sequence
+    :param struct1: The original dot-bracket structure of SRE (representing the OFF state) (str).
+    :param constraint: The dot-bracket constraint for the SRE + linker + RNA3 sequence
                        to guide the folding towards the desired ON state (str).
-    :param mutable_rna1: A list of 0-indexed positions in RNA1 that are allowed to mutate (list of int).
-    :param watched_positions: A list of 0-indexed positions in RNA1 to check for structural changes.
+    :param mutable_rna1: A list of 0-indexed positions in SRE that are allowed to mutate (list of int).
+    :param watched_positions: A list of 0-indexed positions in SRE to check for structural changes.
                               These positions should ideally change their pairing status between the OFF and ON states (list of int).
-    :param use_mutations: If True, the GA will explore mutations in RNA1. Defaults to True (bool).
+    :param use_mutations: If True, the GA will explore mutations in SRE. Defaults to True (bool).
     :param mfe_delta: The minimum required difference in MFE (MFE_ON - MFE_OFF) for a valid switch.
                       Higher values indicate a stronger switch. Defaults to 0 (float).
-    :param max_pairings_rna1_rna3: Maximum allowed base pairings between RNA1 and RNA3 in the
+    :param max_pairings_rna1_rna3: Maximum allowed base pairings between SRE and RNA3 in the
                                    unconstrained (OFF) state. Defaults to 5 (int).
-    :param max_structure_changes: Maximum allowed changes in the RNA1 sub-structure within the
+    :param max_structure_changes: Maximum allowed changes in the SRE sub-structure within the
                                   constrained (ON) state compared to its original structure. Defaults to 6 (int).
     :param num_mut: (Currently unused by GA's internal mutation rates, kept for compatibility if needed).
                     Defaults to 0 (int).
@@ -678,7 +678,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     :param linker_length_ga: The specific length of the linker sequences that the genetic algorithm will target. Defaults to 7 (int).
     :param elitism_rate: The proportion of the best individuals from the current generation that
                          are directly passed to the next generation without mutation or crossover. Defaults to 0.1 (float).
-    :param mutation_rate_rna1: The probability of a mutation occurring in the RNA1 segment of an individual. Defaults to 0.02 (float).
+    :param mutation_rate_rna1: The probability of a mutation occurring in the SRE segment of an individual. Defaults to 0.02 (float).
     :param mutation_rate_linker: The probability of a mutation occurring in the linker segment of an individual. Defaults to 0.05 (float).
     :param tournament_size: The number of individuals chosen randomly from the population for
                             tournament selection. The individual with the highest fitness among them is selected. Defaults to 3 (int).
@@ -698,21 +698,21 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     cluster_labels = [] 
 
     final_report_lines.append("### Genetic Algorithm Linker Search Report\n")
-    final_report_lines.append(f"**Original RNA1:** {rna1}\n")
-    final_report_lines.append(f"**RNA3:** {rna3}\n")
-    final_report_lines.append(f"**Directed RNA1 Structure (Dot-Bracket):** {struct1}\n")
+    final_report_lines.append(f"**Original SRE:** {rna1}\n")
+    final_report_lines.append(f"**Aptamer:** {rna3}\n")
+    final_report_lines.append(f"**Directed SRE Structure (Dot-Bracket):** {struct1}\n")
     final_report_lines.append(f"**Constraint for ON state:** {constraint}\n")
-    final_report_lines.append(f"**Mutable positions in RNA1:** {mutable_rna1}\n")
-    final_report_lines.append(f"**'Watched' positions in RNA1:** {watched_positions}\n")
-    final_report_lines.append(f"**Allow mutations in RNA1:** {use_mutations}\n")
+    final_report_lines.append(f"**Mutable positions in SRE:** {mutable_rna1}\n")
+    final_report_lines.append(f"**'Watched' positions in SRE:** {watched_positions}\n")
+    final_report_lines.append(f"**Allow mutations in SRE:** {use_mutations}\n")
     final_report_lines.append(f"**Minimum MFE Delta:** {mfe_delta:.2f} kcal/mol\n")
-    final_report_lines.append(f"**Max RNA1-RNA3 pairings:** {max_pairings_rna1_rna3}\n")
-    final_report_lines.append(f"**Max RNA1 structure changes (ON state):** {max_structure_changes}\n")
+    final_report_lines.append(f"**Max SRE-Aptamer pairings:** {max_pairings_rna1_rna3}\n")
+    final_report_lines.append(f"**Max SRE structure changes (ON state):** {max_structure_changes}\n")
     # Add GA specific parameters to the report
     final_report_lines.append(f"**GA Population Size:** {population_size}\n")
     final_report_lines.append(f"**GA Generations:** {generations}\n")
     final_report_lines.append(f"**GA Elitism Rate:** {elitism_rate}\n")
-    final_report_lines.append(f"**GA RNA1 Mutation Rate:** {mutation_rate_rna1}\n")
+    final_report_lines.append(f"**GA SRE Mutation Rate:** {mutation_rate_rna1}\n")
     final_report_lines.append(f"**GA Linker Mutation Rate:** {mutation_rate_linker}\n")
     final_report_lines.append(f"**GA Tournament Size:** {tournament_size}\n")
     
@@ -797,7 +797,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
             final_report_lines.append(f"**Result {i+1}:**\n")
             final_report_lines.append(f"   Linker: {res['linker']}\n")
             final_report_lines.append(f"   Fitness (MFE_ON - MFE_OFF): {res['fitness']:.2f}\n")
-            final_report_lines.append(f"   RNA1 Mutations: {res['mut1_info']}\n")
+            final_report_lines.append(f"   SRE Mutations: {res['mut1_info']}\n")
             final_report_lines.append(f"   MFE OFF: {res['mfe_1']:.2f} kcal/mol, MFE ON: {res['mfe_2']:.2f} kcal/mol\n")
             final_report_lines.append("---\n")
 

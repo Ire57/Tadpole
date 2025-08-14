@@ -686,19 +686,19 @@ def build_full_html_report(
     # Create a sorted list of clusters based on the delta_mfe of their representative
     sorted_clusters_energy = sorted(
         cluster_representatives.items(),
-        # Corrección: se usa item[1][1] para acceder al diccionario
-        # El primer [1] accede al valor (la tupla) del diccionario `cluster_representatives`.
-        # El segundo [1] accede al diccionario de resultados dentro de esa tupla.
+       
         key=lambda item: abs((item[1][1]['mfe_2'] - item[1][1]['mfe_1']) - mfe_delta)
     )
     sorted_clusters_pairings = sorted(
         cluster_representatives.items(),
-        # Corrección: se usa item[1][1] para acceder al diccionario
-        # El primer [1] accede al valor (la tupla) del diccionario `cluster_representatives`.
-        # El segundo [1] accede al diccionario de resultados dentro de esa tupla.
-        key=lambda item: abs(count_rna1_rna3_pairings(item[1][1]['structure_unconstrained'], item[1][1]['rna1_mutated_seq'], item[1][1]['rna3'], item[1][1]['linker']) - max_pairings)
+        
+        key=lambda item: abs(count_rna1_rna3_pairings(
+            item[1][1]['structure_unconstrained'],
+            item[1][1].get('rna1_mutated_seq', item[1][1]['rna1']),
+            item[1][1]['rna3'],
+            item[1][1]['linker']
+        ) - max_pairings)
     )
-
     # Start building the HTML
     html = f"""
     <html>
@@ -726,26 +726,26 @@ def build_full_html_report(
       </style>
     </head>
     <body>
-      <h1>🔬 RNA1–Aptamer Switch Design Report</h1>
+      <h1> SRE–Aptamer Switch Design Report</h1>
       <p class="small">Generated: {now}</p>
 
       <div class="section">
-        <h2>📚 Introduction and Objectives</h2>
+        <h2> Introduction and Objectives</h2>
         <p>In this study, we aim to convert a functional element of RNA1 (e.g., a frameshift or SCR) into a molecular "off→on" switch regulated by an aptamer (RNA2) and its ligand. This is achieved by designing a "linker" that connects RNA1 with RNA2, allowing RNA1 to toggle between an "off" (inactive) and an "on" (active) state in response to ligand binding.</p>
     </div>
 
       <div class="section">
-        <h2>⚙️ Search Parameters</h2>
+        <h2> Search Parameters</h2>
         <ul>
           <li><strong>Search Method:</strong> {search_method}</li>
-          <li>Mutations in RNA1: {"Yes" if use_mutations else "No"}</li>
+          <li>Mutations in SRE: {"Yes" if use_mutations else "No"}</li>
           <li>Mutable positions: {', '.join(map(str, mutable_rna1)) or '—'}</li>
           <li>Watched positions: {', '.join(map(str, watched_positions)) or '—'}</li>
-          <li>Maximum allowed mutations: {num_mut}</li>
+          <li>Maximum allowed mutations: {num_mut or '—'}</li>
           <li>Linker length: {linker_min}–{linker_max} nt</li>
           <li>Minimum required ΔMFE: {mfe_delta:.1f} kcal/mol</li>
-          <li>Maximum RNA1–RNA3 pairings: {max_pairings}</li>
-          <li>Maximum structural changes in RNA1: {max_changes}</li>
+          <li>Maximum SRE-Aptamer pairings: {max_pairings}</li>
+          <li>Maximum structural changes in SRE: {max_changes}</li>
           <li>Verbose: {"Yes" if verbose else "No"}</li>
         </ul>
       </div>
@@ -753,18 +753,18 @@ def build_full_html_report(
 
     html += f"""
       <div class="section">
-        <h2>📊 Summary of Results</h2>
+        <h2> Summary of Results</h2>
         <p>A total of <strong>{total_found}</strong> linkers meeting the search criteria were found, grouped into <strong>{total_clusters}</strong> distinct structural clusters. The average global metrics for the solutions found are:</p>
         <table class="metric-table">
           <tr><th>Total linkers found</th><td>{total_found}</td></tr>
           <tr><th>Total distinct clusters</th><td>{total_clusters}</td></tr>
           <tr><th>Average ΔMFE (on–off)</th><td>{avg_delta:.2f} kcal/mol</td></tr>
-          <tr><th>Average RNA1–RNA3 pairings</th><td>{avg_pairs:.1f}</td></tr>
+          <tr><th>Average SRE-Aptamers pairings</th><td>{avg_pairs:.1f}</td></tr>
         </table>
       </div>
 
             <div class="section">
-            <h2>🔬 Detailed Analysis by Cluster</h2>
+            <h2> Detailed Analysis by Cluster</h2>
             <p>Below is a list of the representative sequences of all the clusters, ordered by the proximity of the representative linker's ΔMFE to the desired value ({mfe_delta:.1f} kcal/mol).
 
     """
@@ -781,7 +781,7 @@ def build_full_html_report(
     """
     for cluster_id, representative_result in sorted_clusters_pairings:
         html += f"""
-                Cluster {cluster_id}:{count_rna1_rna3_pairings(representative_result[1]['structure_unconstrained'], representative_result[1]['rna1_mutated_seq'], representative_result[1]['rna3'], representative_result[1]['linker'])} 
+                Cluster {cluster_id}:{count_rna1_rna3_pairings(representative_result[1]['structure_unconstrained'], representative_result[1].get('rna1_mutated_seq', representative_result[1]['rna1']), representative_result[1]['rna3'], representative_result[1]['linker'])} 
         """
     html += f"""
     <p>How to choose the best option? </p>
@@ -866,7 +866,7 @@ def build_full_html_report(
                             <p><strong>Full Sequence (RNA1+Linker+RNA3):</strong> <code>{res['sequence']}</code></p>
                             <p><strong>Mutations in RNA1:</strong> {res.get('mut1_info', 'N/A')}</p>
                             <p><strong>ΔMFE (Off→On):</strong> {(res['mfe_2']-res['mfe_1']):.2f} kcal/mol —
-                              <strong>RNA1–RNA3 Pairings:</strong> {count_rna1_rna3_pairings(res['structure_unconstrained'], res['rna1_mutated_seq'], res['rna3'], res['linker'])}</p>
+                              <strong>RNA1–RNA3 Pairings:</strong> {count_rna1_rna3_pairings(res['structure_unconstrained'], res.get('rna1_mutated_seq', res['rna1']), res['rna3'], res['linker'])}</p>
                         </div>
                     </div>
                     """
@@ -913,7 +913,7 @@ def build_full_html_report(
 
       <div class="section">
         <h2>💡 Possible Improvements and Next Steps</h2>
-        <p>To further optimize the RNA switch design, consider the following recommendations:</p>
+        <p>To further optimize the RNA switch design, consider the following recommendations (for more information on the parameters, visit the 'Help' section of Tadpole):</p>
         <ul>
           <li><strong>Adjust Search Parameters:</strong>
             <ul>
@@ -1538,7 +1538,7 @@ def linker_finder_tab():
                 )
                 ga_mutation_rate_rna1 = st.slider(
                     label="SRE Mutation Rate",
-                    min_value=0.0, max_value=0.2, value=0.02, step=0.005,
+                    min_value=0.0, max_value=0.4, value=0.04, step=0.005,
                     help="Probability of a base mutation in SRE per position."
                 )
                 ga_mutation_rate_linker = st.slider(
@@ -1556,17 +1556,32 @@ def linker_finder_tab():
                 linker_length_for_ga = linker_min # Use the min length as fixed length for GA
 
             st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <p style='color:red; font-weight:bold;'>
+            WARNING: If you do not change this name, the results will be mixed and some might be rewritten.
+            </p>
+            """,
+            unsafe_allow_html=True
+        )
+
         folder = st.text_area(
                 label="Folder name",
                 value='linker_search',
-                placeholder="WARNING: If you do not change this name, " \
-                "the results will be mixed and some might be rewriten.",
                 help="Folder name in which the files will be placed. "
             )
         st.markdown("---")
         # Execute and STOP buttons
         run_col1, run_col2 = st.columns([4, 1])
         with run_col1:
+            st.markdown("""
+                ⚠️ **Notice – Responsible Use Agreement**
+
+                By pressing this button, you confirm that you will use this tool **solely for research or educational purposes** and in compliance with all applicable **biosafety** and **biosecurity** regulations.  
+
+                **Misuse of this software for harmful purposes is strictly prohibited.**
+                """)
+
             run_button = st.button("Execute Linker search")
         with run_col2:
             st.markdown("ATENTION, images and .txt will be saved on the corresponding folder but the text bellow will restart.")
@@ -1765,7 +1780,7 @@ def linker_finder_tab():
                 current_linker_min_for_report = linker_length_for_ga
                 current_linker_max_for_report = linker_length_for_ga # Fixed length
 
-            # This is where you generate your rich HTML report
+            # Generate the rich HTML report
             html_report_content = build_full_html_report(
                 results=st.session_state["results"],
                 report=st.session_state["report"], # Passing the raw log to be included in the HTML report
@@ -1788,10 +1803,10 @@ def linker_finder_tab():
                 image_output_dir=folder,
                 representative_img_bases=representative_img_bases
             )
-            # 2. Comprime el directorio y obtén el contenido binario
+            # results in a zip file
             zip_data = create_zip_archive(folder)
 
-            # 3. Muestra el botón de descarga en Streamlit
+            # allow download
             st.download_button(
                 label="Download results",
                 data=zip_data,
@@ -1807,7 +1822,7 @@ def linker_finder_tab():
             
 
             st.subheader("Final Report")
-            with st.expander("View Full HTML Report", expanded=True):
+            with st.expander("View Full HTML Report", expanded=False):
                 # The 'height' and 'scrolling' parameters are important for long reports
                 st.components.v1.html(html_report_content, height=800, scrolling=True)
 
@@ -2083,14 +2098,14 @@ def help_tab():
             "")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/OFF.png", width=900)
+                st.image("images/OFF.png", width=1200)
 
             example_cont_box(""
             "- In the presence of ligand: the aptamer binds to it and forms its own structure, releasing the SCR to fold normally, stimulating readthrough and producing protein AB." \
             "")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/ON.png", width=900)
+                st.image("images/ON.png", width=1200)
 
         
         
@@ -2800,6 +2815,4 @@ elif selected_main_tab == "Tools":
         structural_rna_element_tab() 
 
    
-
-
 
