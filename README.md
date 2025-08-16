@@ -1,124 +1,217 @@
-# RNA Conservation and Secondary Structure Analysis
+# Team Barcelona-UB 2025 Software Tool: TADPOLE
 
-## Project Objectives
+## Description
 
-This web application allows you to:
+**TADPOLE** is a computational tool for identifying optimal linker sequences in functional RNA switches. It is designed to help you build your own RNA ON/OFF systems that reprogram translation through shape, not sequence.
 
-Analyze multiple sequence alignments (MSA) of RNA sequences to:
+Forget promoters, think aptamers. The future of regulation is here.
 
-- Calculate positional conservation across the alignment.
-- Predict and visualize RNA secondary structure.
-- Generate colored graphical representations integrating conservation and structure.
-- Facilitate biological interpretation through interactive visualizations and quantitative analysis.
-
-Linker Finder: This tool integrates a genetic algorithm to optimize RNA linker sequences for functional RNA switches. It works by:
-
-- Generating an initial population of random linker sequences.
-
-- Evaluating each linker based on predicted RNA folding in OFF and ON states, structural constraints, and energy differences (switch efficiency).
-
-- Selecting top-performing linkers for crossover and mutation to create new candidates.
-
-- Iterating over multiple generations to improve solutions.
-
-- Outputting the best linker sequences with their structural and fitness data.
+In short, you input your Structural RNA Element (SRE) and Aptamer, and the tool helps you turn them into a functional RNA switch. This means you can turn the function of your SRE on and off.
 
 ---
+
+## Usage
+
+### Online Tool (Recommended)
+
+For a direct and user-friendly experience, TADPOLE is deployed as a web application. Use the tool online with no installation required at: [https://toolkit-m4g6.onrender.com](https://toolkit-m4g6.onrender.com)
+
+### Local Installation (For Developers)
+
+For those who want to expand the code, the following instructions explain how to set up the project locally using Docker.
+
 ---
-## Web Application Access
-
-While Streamlit offers a direct application deployment service, the inherent complexity of our application—specifically its reliance on libraries such as ViennaRNA and Ghostscript, which necessitate compilation beyond standard Python environments—precluded its direct deployment via Streamlit for this phase. Consequently, a demonstration version of the tool has been deployed on **Render** (https://render.com/) to ensure its accessibility for evaluation. It is important to note that this current deployment operates within Render's limited resource model, which may result in longer initial page load times. For optimal performance and to effectively test the application's core functionality, it is recommended to utilise the Genetic Algorithm (GA) option, configuring it with approximately 10 generations and a low energy difference (MFE Delta). It should be noted that a different deployment strategy may be employed for the application's final public release. Access the live demonstration here: \href{https://toolkit-m4g6.onrender.com/}{Access the demo here}
-
----
-## Requirements and Installation
-### Requirements
-Python 3.8 or higher
-
-ViennaRNA Package (includes RNAplot) installed and accessible from the command line
-
-Ghostscript (gs) installed and accessible from the command line
-
-System libraries required by WeasyPrint (for PDF/HTML rendering)
 
 ### Installation
 
-1. Install system dependencies
-Ubuntu/Debian:
+#### Requirements
 
-sudo apt-get update
-sudo apt-get install -y python3-pip python3-venv git ghostscript \
-    libpango1.0-0 libgdk-pixbuf2.0-0 libcairo2
+* **Docker Desktop**: You must have Docker Desktop installed on your system.
+* **WSL (Windows Subsystem for Linux)**: If you are on a Windows machine, ensure WSL is installed and that Docker is integrated with it.
 
-2. Install ViennaRNA Package
-Download and install ViennaRNA following the official instructions:
-https://www.tbi.univie.ac.at/RNA/
-sudo apt-get install viennarna
+#### Steps
 
+1.  **Open terminal and clone the repository** in your desired folder.
+    ```bash
+    git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
+    ```
+    ![Image showing how to clone the repository with Docker Desktop open.](images/docker/1.png)
 
-3. Clone this repository:
+2.  **Navigate to the folder** with the `Dockerfile`.
+    ```bash
+    cd barcelona-ub
+    ```
 
-git clone https://github.com/Ire57/Toolkit.git
-cd Toolkit
+3.  **Open Docker Desktop** and check that it is running.
+    ```bash
+    docker desktop
+    ```
+    If it is not installed, download Docker Desktop from [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/), install, and open it.
 
-4. Create and activate a Python virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate    # On Windows: venv\Scripts\actívate
+4.  **Check for WSL integration** if you are on Windows.
+    ```bash
+    wsl --version
+    ```
+    If not installed, run:
+    ```bash
+    wsl --install
+    ```
+    When using Windows, confirm that Docker is integrated with WSL by checking `Docker Desktop → Settings → Resources → WSL Integration`. Make sure this is checked:
 
-5. Install Python dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
+    ![Image showing the "Enable integration with my default WSL distro" checkbox.](images/docker/2.png)
 
+    For further confirmation, it should appear this when opening the Resources tab:
 
-Verify installation
+    ![Image showing the "Resources" tab in Docker Desktop.](images/docker/3.png)
 
-Check ViennaRNA tools:
-RNAplot --help
+5.  **Build the Docker Image**:
+    ```bash
+    docker build -t tadpole .
+    ```
+    It should take some time.
+    ![Image showing the Docker image building process in the terminal.](images/docker/4.png)
+    Check if the image is created by using the command line:
+    ```bash
+    docker ps
+    ```
+    ![Image showing the results of the "docker ps" command.](images/docker/5.png)
+    Or use Docker Desktop:
+    ![Image showing the "Images" tab in Docker Desktop.](images/docker/6.png)
 
+6.  **Run the Container**:
+    ```bash
+    docker run -d -p 8501:8501 tadpole
+    ```
+    It is important that you only use port `8501`, as any other port will not work. You can check the status of the image and container in the Docker Desktop, Images Tab:
+    ![Image showing the running container in the Docker Desktop "Images" tab.](images/docker/7.png)
+    ![Image showing the "Containers" tab in Docker Desktop with the running container.](images/docker/8.png)
 
-Check Ghostscript:
-gs --version
+7.  **Access the Application**:
+    Then open a browser tab and navigate to:
+    ```
+    http://localhost:8501
+    ```
+    ![Image showing the TADPOLE application in a web browser.](images/docker/9.png)
 
-Check Python packages:
-python -c "import RNA, streamlit, weasyprint; print('All packages loaded successfully')"
+8.  **Container Management**: Once finished, you can stop the container in Docker Desktop or by command.
+    * To check running containers, look for the one with the `tadpole` image:
+        ```bash
+        docker ps
+        ```
+    * Copy the `CONTAINER ID` or `NAMES`, then run:
+        ```bash
+        docker stop <container_id_or_name>
+        ```
+    * In case you want to restart:
+        ```bash
+        docker start <container_id_or_name>
+        ```
+    * To remove/delete the container and image:
+        * Container:
+            ```bash
+            docker rm <container_id_or_name>
+            ```
+        * Image:
+            ```bash
+            docker rmi <image_id_or_name>
+            ```
+    The last two steps can also be done using Docker Desktop.
 
+---
 
+## Core Methodology
 
+The design process is a multi-step pipeline based on computational and biological principles:
 
-## Quick Start Guide
+* **Constraint-Based Design**: Users provide a desired "ON" state structure in dot-bracket notation as a constraint for the search algorithms.
+* **Thermodynamic Prediction**: ViennaRNA predicts Minimum Free Energy (MFE) secondary structures. The key evaluation metric is **ΔMFE**, the difference in MFE between the "ON" and "OFF" states.
+* **Dual Search Algorithms**:
+    * **Brute-Force Search**: Explores every nucleotide combination. Guarantees all solutions but is only feasible for short linkers.
+    * **Genetic Algorithm (GA)**: Efficiently explores large design spaces via mutation, crossover, and a custom fitness function.
+* **Evaluation**: Candidates are assessed for:
+    * **ΔMFE**: Difference between "ON" and "OFF" states.
+    * **SRE preservation**: The "ON" state must maintain the functional SRE structure.
+    * **OFF-state disruption**: The "OFF" state should disrupt the SRE.
+    * **Base pair interactions**: Number and quality of pairings between system elements.
+* **Structural and Diversity Analysis**: Designs are clustered to identify structural families and assess diversity, helping users select unique and robust solutions.
+![Image showing a diagramm of the Core Methotology](images/main.png)
+---
 
-1. Run the app:
+## Standards and Interoperability
 
-streamlit run app.py
+TADPOLE adheres to open standards and common file formats (e.g., FASTA). All valid designs are exported in **SBOL3 JSON-LD** format, ensuring compatibility with tools such as SynBioHub, SBOLDesigner, and other pipelines. This ensures results are **FAIR**: Findable, Accessible, Interoperable, and Reusable.
 
-2. Upload an MSA file in the sidebar. Supported formats: FASTA (.fasta, .fa) or Clustal (.aln).
+---
 
-The app will validate the file and display:
+## Software Architecture
 
-- Predicted secondary structure for the first sequence.
-- Conservation visualisation mapped onto the structure.
-- Optionally, enable viewing structures for all sequences.
+TADPOLE is built with a modular Python architecture for clarity and maintainability:
 
-3. Explore generated images to analyze sequence conservation and structure.
+| Module | Core Functionality |
+| :--- | :--- |
+| `app.py` | Streamlit UI and workflow control |
+| `genetic_algorithm.py` | Core logic for the GA |
+| `search.py` | Brute-force search and filtering |
+| `input_utils.py` | Parsing of input files |
+| `rna_structures.py` | RNA structure parsing and manipulation |
+| `rna_mutation.py` | Functions for sequence mutation |
+| `structure.py` | RNA structure prediction (ViennaRNA) |
+| `conservation.py` | Sequence/structure conservation analysis |
+| `rna_cluster.py` | Structural clustering and diversity metrics |
+| `visualization.py` | Generation of RNA structure plots |
+| `SBOL.py` | Export to SBOL3 JSON-LD format |
+| `io_tools.py` | File I/O and ZIP archive creation |
 
-## Scientific Background
+---
 
-Conservation in RNA Alignments
-Conservation measures how consistent bases are at a given position across related RNA sequences. It is calculated using Shannon entropy: lower entropy means higher conservation.
+## Outputs
 
-RNA Secondary Structure and RNAplot
-RNA folds into structures by base pairing (helices, loops, etc.). Secondary structure is computationally predicted (here we use ViennaRNA).
+Each run produces a ZIP archive containing:
 
-RNAplot is a tool that produces visual diagrams of RNA secondary structure in PostScript format, illustrating base pairings and folding.
+* **`report.txt`**: A detailed summary, including search parameters and results.
+* **`diversity.png`**: A bar plot of structural diversity (unique vs. total structures).
+* **`delta_mfe.png`**: A histogram of ΔMFE distribution, indicating switching efficiency.
+* **`sbol_document.jsonld`**: The final designs in machine-readable SBOL3 format.
+* **`plots/`**: A directory with high-resolution RNA structure plots highlighting SRE, linker, and aptamer.
 
-## References and Documentation
+---
 
-ViennaRNA Package: https://www.tbi.univie.ac.at/RNA/
+## Contributing
 
-Streamlit: https://streamlit.io/
+We welcome contributions! To contribute:
 
-Conservation and Shannon Entropy:
-Schneider TD, Stephens RM. "Sequence logos: a new way to display consensus sequences." Nucleic Acids Res. 1990.
+1.  Fork the repository and create a feature branch.
+2.  Run tests and ensure code passes linting.
+3.  Submit a pull request with a clear description of your changes.
 
-Ghostscript: https://www.ghostscript.com/
+**Future Work**:
 
-Questions or suggestions? Contact: [ireneagudozamora@gmail.com]
+* **Algorithm Expansion**: Add more optimization strategies.
+* **Aptamer Expansion**: Test different aptamers and set default values automatically.
+* **Experimental Validation**: Protocols for synthesis, fluorescence assays...
+* **Performance Optimization**: Improve speed and reliability of core routines and external calls.
+
+---
+
+## Authors and Acknowledgements
+
+This software was developed by **Team Barcelona-UB 2025**.
+
+Special thanks to:
+
+* The developers of ViennaRNA and SBOL for foundational tools and standards.
+* Open-source libraries: Streamlit, Biopython, and scikit-learn.
+* The iGEM Foundation for providing a platform and resources.
+
+---
+
+## License
+
+This software is licensed under the **Creative Commons Attribution 4.0 International Public License (CC BY 4.0)**.
+
+You are free to:
+* **Share** — copy and redistribute the material in any medium or format.
+* **Adapt** — remix, transform, and build upon the material, even commercially.
+
+Under the following condition:
+* **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in a way that suggests the licensor endorses you or your use.
