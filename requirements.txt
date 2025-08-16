@@ -8,3 +8,7 @@ matplotlib
 biopython
 scikit-learn
 graphviz
+pysbol3
+sbol-factory
+rdflib
+json
