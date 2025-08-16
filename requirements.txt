@@ -8,4 +8,4 @@ matplotlib
 biopython
 scikit-learn
 graphviz
-pysbol3
+sbol3
