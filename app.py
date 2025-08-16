@@ -3,6 +3,7 @@ import streamlit.components.v1 as components
 import traceback
 import matplotlib.pyplot as plt
 import graphviz
+import sbol3
 import os
 import RNA
 from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters
@@ -17,6 +18,7 @@ from rna_structures import get_base_pairs
 from genetic_algorithm import run_genetic_algorithm_search 
 from conservation import calculate_conservation, clasify_conservation, conservation_category, calculate_complementarity_conservation
 from io_tools import create_zip_archive
+from SBOL import export_single_linker
 from scipy.spatial.distance import pdist, squareform
 import numpy as np
 import shutil
@@ -128,10 +130,12 @@ st.markdown("""
     }
     .stButton>button:hover {
         background-color: var(--dark-red); /* Darker red on hover */
+        color: #FFF;
         transform: translateY(-2px);
     }
     .stButton>button:active {
         background-color: var(--dark-red);
+        color: #FFF;
         transform: translateY(0);
         box-shadow: none;
     }
@@ -301,7 +305,7 @@ st.markdown("""
         padding: 12px 15px;
         margin-bottom: 0.75rem;
         transition: all 0.2s ease;
-        color: var(--text-color-light);
+        color: #FFF;
         font-weight: 500;
         border-left: 4px solid transparent;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -346,7 +350,7 @@ st.markdown("""
     /* Sidebar buttons */
     [data-testid="stSidebar"] .stButton > button {
         background-color: var(--soft-red);
-        color: var(--deep-red);
+        color: #FFF;
         border: 1px solid var(--light-red);
         border-radius: 6px;
         font-weight: 500;
@@ -358,6 +362,7 @@ st.markdown("""
     /* Hover state for botones on sidebar */
     [data-testid="stSidebar"] .stButton > button:hover {
         background-color: var(--light-red);
+        color: #FFF;
         border-color: var(--primary-red);
         transform: translateY(-1px);
         box-shadow: 0 2px 5px rgba(229, 41, 32, 0.2);
@@ -581,21 +586,6 @@ def plot_pairings_histogram(results, rna1, rna3, output_dir="report_images", bin
 
     return out_path
 
-def structure_distance(s1, s2):
-    """
-    Computes the Hamming distance between two RNA secondary structures.
-
-    This function compares two RNA secondary structures (in dot-bracket notation)
-    and returns the number of positions where they differ. It assumes both input
-    structures are of equal length.
-
-    :param s1: First RNA secondary structure string in dot-bracket notation. (str)
-    :param s2: Second RNA secondary structure string in dot-bracket notation. (str)
-
-    :returns: The Hamming distance (number of mismatched characters) between the two structures. (int)
-    """
-    # Simple Hamming distance between two secondary structures
-    return sum(a != b for a, b in zip(s1, s2))
 
 
 
@@ -694,7 +684,7 @@ def build_full_html_report(
         
         key=lambda item: abs(count_rna1_rna3_pairings(
             item[1][1]['structure_unconstrained'],
-            item[1][1].get('rna1_mutated_seq', item[1][1]['rna1']),
+            item[1][1].get('rna1_mutated_seq', item[1][1].get('rna1_sequence', 'N/A')),
             item[1][1]['rna3'],
             item[1][1]['linker']
         ) - max_pairings)
@@ -781,7 +771,7 @@ def build_full_html_report(
     """
     for cluster_id, representative_result in sorted_clusters_pairings:
         html += f"""
-                Cluster {cluster_id}:{count_rna1_rna3_pairings(representative_result[1]['structure_unconstrained'], representative_result[1].get('rna1_mutated_seq', representative_result[1]['rna1']), representative_result[1]['rna3'], representative_result[1]['linker'])} 
+                Cluster {cluster_id}:{count_rna1_rna3_pairings(representative_result[1]['structure_unconstrained'], representative_result[1].get('rna1_mutated_seq', representative_result[1].get('rna1_sequence', 'N/A')), representative_result[1]['rna3'], representative_result[1]['linker'])} 
         """
     html += f"""
     <p>How to choose the best option? </p>
@@ -866,7 +856,7 @@ def build_full_html_report(
                             <p><strong>Full Sequence (RNA1+Linker+RNA3):</strong> <code>{res['sequence']}</code></p>
                             <p><strong>Mutations in RNA1:</strong> {res.get('mut1_info', 'N/A')}</p>
                             <p><strong>ΔMFE (Off→On):</strong> {(res['mfe_2']-res['mfe_1']):.2f} kcal/mol —
-                              <strong>RNA1–RNA3 Pairings:</strong> {count_rna1_rna3_pairings(res['structure_unconstrained'], res.get('rna1_mutated_seq', res['rna1']), res['rna3'], res['linker'])}</p>
+                              <strong>RNA1–RNA3 Pairings:</strong> {count_rna1_rna3_pairings(res['structure_unconstrained'], res.get('rna1_mutated_seq', res.get('rna1_sequence', 'N/A')), res['rna3'], res['linker'])}</p>
                         </div>
                     </div>
                     """
@@ -940,12 +930,6 @@ def build_full_html_report(
     """
 
     return html
-
-
-
-
-
-
 
 
 
@@ -1050,8 +1034,8 @@ def input_block(title):
     """, unsafe_allow_html=True)
 
 
-# ===== Pestaña principal =====
-def structural_rna_element_tab():
+# ===== SRE sub-tab =====
+def structural_rna_element_tab(): #(With the MSA Tool)
     
         
     st.markdown("""<div style="font-size: 2.7rem; color: #ea534e; font-weight: bold; margin-top: 1rem;">
@@ -1060,7 +1044,6 @@ def structural_rna_element_tab():
     """, unsafe_allow_html=True)
 
 
-    # --- Reubicación del cargador de archivos y la sección "About" del antiguo sidebar ---
     st.markdown("""**Load MSA file**""")
     uploaded_file = st.file_uploader("Formats: FASTA (.fasta, .fa) or Clustal (.aln)", type=["fasta", "fa", "aln"])
     
@@ -1093,7 +1076,7 @@ def structural_rna_element_tab():
     # Pass msa and msa_name to sub-tab functions
     with structural_rna_sub_sub_tabs[0]:
         if msa and len(msa) >= 1:
-            # --- START tab1_analysis content ---
+            # --- START analysis content ---
             import shutil, os
             from matplotlib import pyplot as plt
 
@@ -1213,14 +1196,14 @@ def structural_rna_element_tab():
                 unsafe_allow_html=True
             )
                         
-            # --- END tab1_analysis content ---
+            # --- END analysis content ---
         else:
             st.info("Once the file is uploaded, here you will find the predicted structure and energy of the first seuqence of the MSA (presumably the one you are interesetd on characterising)"
             "and a conservation map, with the conservation score per position.")
-    # --- START tab1_analysis content ---
+    
     with structural_rna_sub_sub_tabs[1]: # structural clustering
         if msa and len(msa) >= 2: # Clustering requires at least 2 sequences
-            # --- START tab2_clustering content ---
+            # --- START clustering content ---
             import shutil, os, time
             st.header("Structural Clustering")
 
@@ -1315,11 +1298,11 @@ def structural_rna_element_tab():
                     st.image(f"{output_dir}/diversity.png", caption="Structural Diversity")
 
 
-            # --- END tab2_clustering content ---
+            # --- END clustering content ---
         else:
             st.info("This section allows you to see the structure of the different unique structures of your MSA, with the nucleotides colored by conservation.")
 
-    with structural_rna_sub_sub_tabs[2]: # Visualizar Todas las Estructuras
+    with structural_rna_sub_sub_tabs[2]: # Visualise all structures
         if msa and len(msa) >= 1:
             
             # --- START visualise all structures content  ---
@@ -1390,6 +1373,9 @@ def structural_rna_element_tab():
                 # --- END visualise all structures content ---
         else:
             st.info("Please, upload an MSA file to proceed with the analysis.")
+
+
+
 
 # --- Content for "Linker Finder" sub-tab ---
 def linker_finder_tab():
@@ -1538,12 +1524,12 @@ def linker_finder_tab():
                 )
                 ga_mutation_rate_rna1 = st.slider(
                     label="SRE Mutation Rate",
-                    min_value=0.0, max_value=0.4, value=0.04, step=0.005,
+                    min_value=0.0, max_value=0.4, value=0.05, step=0.005,
                     help="Probability of a base mutation in SRE per position."
                 )
                 ga_mutation_rate_linker = st.slider(
                     label="Linker Mutation Rate",
-                    min_value=0.0, max_value=0.5, value=0.05, step=0.01,
+                    min_value=0.0, max_value=0.5, value=0.1, step=0.01,
                     help="Probability of a base mutation in the linker per position."
                 )
                 ga_tournament_size = st.number_input(
@@ -1814,6 +1800,41 @@ def linker_finder_tab():
                 mime="application/zip"
             )
 
+            # Download in SBOL
+            st.markdown("""
+                ### Download your design in SBOL format 
+
+                **SBOL (Synthetic Biology Open Language)** is the global standard for describing synthetic biology designs. 
+                        By downloading your results in this XML format, you can share your RNA design in a way that is easily 
+                        reproducible, reusable, and compatible with other tools in the scientific community.
+
+                """)
+            merged_doc = sbol3.Document()
+
+            if results:
+                for index, result in enumerate(results):
+                    # Llama a la función para cada resultado y añade el componente al documento
+                    merged_doc = export_single_linker(
+                        doc=merged_doc,
+                        result=result,
+                        index=index
+                    )
+                
+                # Convierte el documento completo a una cadena JSON-LD
+                sbol_bytes = merged_doc.write_string("json-ld").encode("utf-8")
+            
+                # Muestra el botón de descarga solo si hay resultados
+                st.download_button(
+                    label="Download All Linkers as SBOL",
+                    data=sbol_bytes,
+                    file_name="all_linkers.jsonld",
+                    mime="application/ld+json"
+                )
+            else:
+                st.info("No hay resultados de linkers para exportar.")
+
+
+
             # 4. Limpia la carpeta temporal después de la descarga (opcional, pero recomendado)
             # Esto asegura que no se acumulen archivos innecesarios en el servidor.
             #if os.path.exists(folder):
@@ -1861,16 +1882,15 @@ def linker_finder_tab():
 
 
 
-# --- Content for "Aptamers" sub-tab ---
-
+# --- Create diagrams for the description section ---
 def create_ga_diagram():
-    # Crear un nuevo objeto de gráfico dirigido
+    # Create new object
     dot = graphviz.Digraph(comment='Genetic Algorithm Workflow (Complete)')
     dot.attr('node', shape='box', style='rounded', fontname='Helvetica')
     dot.attr('edge', fontname='Helvetica')
     dot.attr('graph', rankdir='TB')
 
-    # Nodos principales
+    # Main ndodes
     dot.node('start', 'Start')
     dot.node('init_pop', 'Initialize Population')
 
@@ -1888,23 +1908,23 @@ def create_ga_diagram():
     dot.node('generate_report', 'Generate Final Report\n& Output Files')
     dot.node('end', 'End')
 
-    # Conexiones
+    # Connexions
     dot.edge('start', 'init_pop')
     dot.edge('init_pop', 'eval_fitness')
     
-    # Bucle principal
+    # Main loop
     dot.edge('eval_fitness', 'store_solutions')
     dot.edge('store_solutions', 'sel_parents')
     dot.edge('sel_parents', 'gen_offspring')
     dot.edge('gen_offspring', 'next_gen')
     dot.edge('next_gen', 'eval_fitness', label='Loop')
     
-    # Salida del bucle
+    # Final part of the loop
     dot.edge('eval_fitness', 'max_gen_check')
     dot.edge('max_gen_check', 'cluster_solutions', label='Yes')
     dot.edge('max_gen_check', 'sel_parents', label='No')
 
-    # Fin del proceso
+    # End process
     dot.edge('cluster_solutions', 'generate_report')
     dot.edge('generate_report', 'end')
 
@@ -1934,7 +1954,7 @@ def create_brute_force_diagram():
     dot.node('H', 'Meets all Criteria?')
     dot.node('I', 'Store as Valid Solution')
     dot.node('J', 'Mutations Enabled?')
-    dot.node('K', 'Try all possible RNA1 Mutations')
+    dot.node('K', 'Try all possible SRE Mutations')
     dot.node('L', 'Mfe Delta met with Mutation?')
     dot.node('M', 'Store as Valid Solution (with Mutations)')
 
@@ -1942,7 +1962,7 @@ def create_brute_force_diagram():
     dot.node('O', 'Cluster Solutions & Generate Report')
     dot.node('P', 'End')
     
-    # Conexiones
+    # Connexions
     dot.edge('A', 'B')
     dot.edge('B', 'C')
     dot.edge('C', 'D')
@@ -1953,14 +1973,14 @@ def create_brute_force_diagram():
     dot.edge('H', 'J', label='No')
 
     dot.edge('J', 'K', label='Yes')
-    dot.edge('J', 'D', label='No') # Vuelve a iterar si no hay mutaciones
+    dot.edge('J', 'D', label='No') # Iterate again if there where not mutations
 
     dot.edge('K', 'L')
     dot.edge('L', 'M', label='Yes')
-    dot.edge('L', 'D', label='No') # Vuelve a la selección de linker
+    dot.edge('L', 'D', label='No') # Back to linker selection
     
     dot.edge('M', 'D')
-    dot.edge('I', 'D') # Después de guardar, vuelve al siguiente linker
+    dot.edge('I', 'D') # Load and back to linker selection
     
     dot.edge('D', 'N')
     dot.edge('N', 'O', label='Yes')
@@ -1976,15 +1996,15 @@ def create_simple_workflow_diagram():
     dot.attr('node', shape='box', style='rounded', fontname='Helvetica', fontsize='12')
     dot.attr('edge', fontname='Helvetica', fontsize='10')
 
-    # Nodos
-    dot.node('A', 'User Input\n(RNA1, RNA3, Constraints)')
+    # Nodes
+    dot.node('A', 'User Input\n(SRE, Aptamer, Constraints)')
     dot.node('B', 'Search Algorithm\n(Brute Force or GA)')
     dot.node('C', 'Evaluation\n(OFF/ON State, MFE Delta)')
     dot.node('D', 'Valid Linker Found?')
     dot.node('E', 'Final Report & Output\n(Linkers, Structures, Energies)')
     dot.node('F', 'Download Results')
 
-    # Conexiones
+    # Connexions
     dot.edge('A', 'B', label='User provides input')
     dot.edge('B', 'C', label='Software runs search')
     dot.edge('C', 'D', label='Evaluates each solution')
@@ -2017,7 +2037,7 @@ def help_tab():
 
         In this image, you can see the system that builds this tool, a switch with ON (right) and OFF (left) states. 
         """, unsafe_allow_html=True)
-        # Imagen centralizada con columnas
+        # Centering image with collumns
         col1, col2, col3 = st.columns([1, 4, 1])
         with col2:
             st.image("images/system_img.png", width=900)
@@ -2028,7 +2048,16 @@ def help_tab():
         **On State:**  
            The aptamer is bound to the ligand and forms an independent structure, releasing the SRE. The SRE can then form the proper structure to perform its function, therefore leading to an ON state.
 
-       Below you can find a diagram of the general workflow of the software. 
+    
+        ### Core Methodology
+        The design process is a multi-step pipeline built on computational and biological principles:
+        - **Constraint-Based Design:** You provide a desired 'ON' state structure as a constraint to guide the search algorithms.
+        - **Thermodynamic Prediction:** The tool predicts the most stable secondary structures for your designs. The key evaluation metric is **ΔMFE**, the energy difference between the 'ON' and 'OFF' states, which indicates the switching efficiency.
+        - **Dual Search Algorithms:** The tool uses both **Brute-Force Search** (for short linkers) and a **Genetic Algorithm** (for more complex designs) to find the best possible linker sequences.
+        - **Evaluation:** Each candidate design is rigorously assessed based on its **ΔMFE**, structural preservation of the SRE, and minimization of unwanted interactions.
+        - **Structural Analysis:** The final designs are clustered to help you identify unique and structurally robust solutions.
+           
+        Below you can find a diagram of the general workflow of the software. 
 
         """, unsafe_allow_html=True)
         col1, col2, col3 = st.columns([2.5, 4, 1])
@@ -2049,7 +2078,7 @@ def help_tab():
             These elements often rely on their folded conformation to regulate processes such as Stop Codon Readthrough or frameshifting.
             """)
 
-            # Ejemplo SECIS
+            # SECIS Example
             example_box("""
             The SECIS element is an RNA structure that stimulates stop codon readthrough.  
             Normally, translation terminates at a stop codon, releasing the protein.  
@@ -2057,7 +2086,7 @@ def help_tab():
             Its function relies entirely on its secondary structure, so by controlling this structure, we can modulate its regulatory effect.
             """)
 
-            # Imagen centrada
+           
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
                 st.image("images/SCR.png", width=900)
@@ -2068,7 +2097,7 @@ def help_tab():
             If an experimentally validated structure is not available, users are encouraged to predict one using established tools—**RNAfold** from the Vienna RNA Package is highly recommended.  
             """)
 
-            # Nota especial
+           
             st.markdown("""
             <div style="font-size: 1.1em; font-weight: bold; margin-top: 1rem; color: #e41513">
             In case the SRE’s structure you aim to study is not well characterised, this software includes an evolutionary analysis using a multiple sequence alignment (MSA Tool below) to help characterise conserved structural features.
@@ -2247,7 +2276,7 @@ def help_tab():
                 This parameter is especially useful when testing different SRE or aptamer sequences, as their pairing potential may vary significantly.
             """, unsafe_allow_html=True)
 
-            # Bloque Mutations
+            # Mutations Block
             st.markdown("""
                  ## SRE's key parameters:
                         """, unsafe_allow_html=True)
@@ -2255,7 +2284,7 @@ def help_tab():
             st.markdown("""
                 This software allows the user to introduce mutations in the SRE sequence to explore functional variants.  
                 If a nucleotide involved in a base pair is mutated, its paired base is automatically mutated to a complementary one, preserving the secondary structure.""")
-            # Ejemplo imagen SECIS
+            # SECIS example
             example_box("""
                     Take the SECIS element as our SRE. The SECIS element has a certain structure (on the image bellow) that allows it to perform its function.
                         Without that certain structure, it does not work. Not all parts of the structure are equally important, though. Certain positions (green) are key for functions.  
@@ -2268,7 +2297,7 @@ def help_tab():
                 It is recommended to limit mutations to non-critical nucleotides to avoid compromising function.
             """)
 
-        # Bloque Key nucleotides
+        # Key nucleotides Block
         st.markdown("""
      
             #### Key Nucleotides for Function:
@@ -2292,17 +2321,17 @@ def help_tab():
                 Experiment with different sets to achieve accurate results.
                 """, unsafe_allow_html=True)
 
-            # Bloque Allow changes
+            # Allow changes
             input_block("Allow Changes on SRE’s Structure") 
             st.markdown("""
                 While certain nucleotides and structural features of an SRE are essential, others may be flexible or non-critical.  
-                This tool includes a parameter: **Maximum changes on the RNA1 structure**, defining tolerated deviation from the original structure.
+                This tool includes a parameter: **Maximum changes on the SRE structure**, defining tolerated deviation from the original structure.
 
                 - A strict value (0) means the structure must remain identical.  
                 - A higher value allows more flexibility.
                 """)
 
-            # Bloque final
+            # Final Block
             st.markdown("""
                 <h3>Why These Inputs Matter</h3>
                 RNA-based systems are complex; small structural changes can have a big impact, but not all regions matter equally.  
@@ -2354,9 +2383,9 @@ def help_tab():
             - 🔼 **Higher** → Keeps more top solutions, ensuring quality, but reduces exploration of new possibilities.  
             - 🔽 **Lower** → More exploration, but may lose very good solutions along the way.  
 
-            **SRE Mutation Rate – Chance of changing each base in RNA1 during evolution.**  
-            - 🔼 **Higher** → More exploration and diversity in RNA1 sequences, but can destroy promising structures.  
-            - 🔽 **Lower** → More stability in RNA1, but less chance to discover unexpected improvements.  
+            **SRE Mutation Rate – Chance of changing each base in SRE during evolution.**  
+            - 🔼 **Higher** → More exploration and diversity in SRE sequences, but can destroy promising structures.  
+            - 🔽 **Lower** → More stability in SRE, but less chance to discover unexpected improvements.  
 
             **Linker Mutation Rate – Chance of changing each base in the linker.**  
             - 🔼 **Higher** → More variation in linker sequences and potential new folding patterns, but also more instability.  
@@ -2407,7 +2436,7 @@ def help_tab():
         
         """ , unsafe_allow_html=True)
         
-        # Before / After esquema en columnas
+        # Before / After 
         col_before, col_after = st.columns(2)
 
         with col_before:
@@ -2432,214 +2461,44 @@ def help_tab():
         st.markdown("---")
 
     with help_sub_tabs[2]:  # Documentation
-        st.header("Modules and Functions Documentation")
-
-        st.subheader("conservation.py")
+        st.header("Modules and Documentation")
         st.markdown("""
-        This module contains functions to analyze sequence conservation in alignments.
+           
 
-        **calculate_complementarity_conservation(msa, idx, pairs):**  
-        Description: Calculates complementarity conservation at a given position (`idx`) of a multiple sequence alignment (MSA). It identifies the paired position and evaluates consistency of complementary base pairs across all MSA sequences.  
-        Parameters:  
-        - `msa`: A multiple sequence alignment as a list of strings.  
-        - `idx`: The zero-based index of the nucleotide position to analyze.  
-        - `pairs`: A list of tuples representing paired base positions.  
-        Returns:  
-        A string describing the level of complementarity conservation. Possible values include `"always_conserved"`, `"not_paired"`, `"-"`, or `"others"`.
-        """)
+            ### The TADPOLE Modules: What They Do
 
-        st.subheader("genetic_algorithm.py")
-        st.markdown("""
-        This module implements the genetic algorithm to design RNA switches.
+            While you won't need to interact with these directly, this is a high-level overview of the main components that make the tool run:
 
-        **get_pair_table(struct):**  
-        Description: Generates a pairing table for a given RNA secondary structure in dot-bracket notation.  
-        Parameters:  
-        - `struct`: The RNA secondary structure string in dot-bracket notation.  
-        Returns:  
-        A 1-based list representing the pairing table.
+            * **`conservation.py`**: Analyzes sequence conservation to help ensure the stability and functionality of your designs.
+            * **`genetic_algorithm.py`**: This is the "smart" engine for longer linker designs. It intelligently searches for optimal sequences.
+            * **`input_utils.py`**: Ensures that all the files and sequences you upload are correctly formatted for the tool to use.
+            * **`io_tools.py`**: Manages all the input and output, including saving your results as reports and images.
+            * **`rna_cluster.py`**: Groups your final designs by structural similarity to help you identify unique solutions.
+            * **`rna_mutation.py`**: Manages the sequence changes needed to explore new designs.
+            * **`rna_structures.py`**: Provides the foundational logic for working with RNA structures and base pairs.
+            * **`search.py`**: Runs the simple search for short linkers and evaluates how well your designs meet the criteria.
+            * **`structure.py`**: Predicts the secondary shape of your RNA designs, which is crucial for their function.
+            * **`visualisation.py`**: Generates all the helpful plots and images you receive in your final output folder.
 
-        **initialize_population(rna1_orig, rna3_orig, linker_length, population_size, mutable_positions_rna1, struct1_orig):**  
-        Description: Initializes a population of individuals for the genetic algorithm. Each individual is an RNA switch candidate with a full sequence, mutated rna1 segment, linker, and rna3 segment.  
-        Parameters:  
-        - `rna1_orig`: Original rna1 sequence.  
-        - `rna3_orig`: Original rna3 sequence.  
-        - `linker_length`: Desired length of linker sequences.  
-        - `population_size`: Number of individuals to generate.  
-        - `mutable_positions_rna1`: List of zero-based positions in rna1 where mutations are allowed.  
-        - `struct1_orig`: Original rna1 structure in dot-bracket notation.  
-        Returns:  
-        A list of dictionaries, each representing an individual.
+            ---
 
-        **fitness(individual, rna1_orig, rna3_orig, struct1_orig, constraint_orig, watched_positions_orig, mfe_delta, max_pairings, max_structure_changes):**  
-        Description: Calculates the fitness score of an individual. Evaluates the RNA switch based on criteria such as observed position changes, minimizing rna1-rna3 pairings, preserving rna1 structure, and minimum free energy (MFE) difference.  
-        Parameters:  
-        - `individual`: Dictionary representing the individual to evaluate.  
-        - `rna1_orig`: Original rna1 sequence.  
-        - `rna3_orig`: Original rna3 sequence.  
-        - `struct1_orig`: Original rna1 structure.  
-        - `constraint_orig`: Dot-bracket constraint string guiding folding toward the "ON" state.  
-        - `watched_positions_orig`: List of positions in rna1 expected to show structural change in the "OFF" state.  
-        - `mfe_delta`: Minimum acceptable energy difference between "ON" and "OFF" states.  
-        - `max_pairings`: Maximum allowed base pairs between rna1 and rna3.  
-        - `max_structure_changes`: Maximum allowed character differences between original rna1 structure and rna1 substructure within the full construct.
-        """)
+            ### Source Code and Contribution
 
-        st.subheader("input_utils.py")
-        st.markdown("""
-        This module manages loading and parsing alignment files.
+            TADPOLE is a project developed by Team Barcelona-UB 2025. You can view, fork, download the application and run in local, and contribute to the source code on our GitLab repository:
 
-        **parse_fasta_msa(uploaded_file):**  
-        Description: Parses an uploaded file as a multiple sequence alignment (MSA) in FASTA or Clustal format. Performs validations to ensure the alignment is suitable for downstream analyses.  
-        Parameters:  
-        - `uploaded_file`: A file-like object expected to have a `read()` method.
-        """)
-        st.subheader("io_tools.py")
-        st.markdown("""
-        This module handles data input/output, including saving and plotting structures.
+            * **GitLab Repository**: [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
 
-        **save_and_plot_structures(seq, structure_unconstr, structure_constr, rna1, linker, rna3, mut1_info, mfe_1, mfe_2, folder_prefix='propuestas'):**  
-        Description: Saves and plots the unconstrained and constrained secondary structures of an RNA switch. Creates folder structure, saves detailed info, and generates files for ViennaRNA's RNAplot tool.  
-        Parameters:  
-        - `seq`: The full RNA sequence.  
-        - `structure_unconstr`: The unconstrained structure in dot-bracket notation.  
-        - `structure_constr`: The constrained structure in dot-bracket notation.  
-        - `rna1`, `linker`, `rna3`: Sequences of the switch segments.  
-        - `mut1_info`: Information about mutations in rna1.  
-        - `mfe_1`, `mfe_2`: MFE values for the structures.  
-        - `folder_prefix`: Output folder prefix, default is "propuestas".
-        """)
+            ---
 
-        st.subheader("rna_cluster.py")
-        st.markdown("""
-        This module clusters RNA structures based on base-pair similarity.
+            ### Authors and Acknowledgements
 
-        **parse_pairs(structure):**  
-        Description: Parses a dot-bracket structure string and extracts all base pairs.  
-        Parameters:  
-        - `structure`: RNA structure in dot-bracket notation.  
-        Returns:  
-        A list of tuples, each tuple representing a base pair.
+            This software was developed by **Team Barcelona-UB 2025**.
 
-        **rmsd_pairs(pairs1, pairs2):**  
-        Description: Calculates the root mean square deviation (RMSD) between two sets of base pairs, quantifying structural similarity between two RNA secondary structures.  
-        Parameters:  
-        - `pairs1`: List of base pairs from the first structure.  
-        - `pairs2`: List of base pairs from the second structure.
-
-        **rmsd_matrix(structures):**  
-        Description: Computes an RMSD distance matrix for a set of structures, where each element [i, j] is the RMSD between structure i and j.  
-        Parameters:  
-        - `structures`: List of RNA structures in dot-bracket notation.  
-        Returns:  
-        A NumPy matrix of RMSD distances.
-
-        **cluster_structures(rmsd_matrix, eps=1.0):**  
-        Description: Performs clustering of structures using DBSCAN algorithm based on RMSD distance matrix.  
-        Parameters:  
-        - `rmsd_matrix`: RMSD distance matrix.  
-        - `eps`: Maximum distance between two samples for them to be considered in the same neighborhood. Default is 1.0.  
-        Returns:  
-        A list of cluster labels where -1 indicates noise.
-
-        **organise_per_clusters(structures, clusters):**  
-        Description: Organizes structures into a dictionary where keys are cluster labels and values are lists of structures in that cluster.  
-        Parameters:  
-        - `structures`: List of structures.  
-        - `clusters`: List of cluster labels.  
-        Returns:  
-        Dictionary of structures grouped by cluster.
-
-        **compute_metrics(clusters_dict):**  
-        Description: Computes various metrics for each cluster such as number of elements and sequences, storing them in a dictionary.  
-        Parameters:  
-        - `clusters_dict`: Dictionary of structures grouped by cluster.  
-        Returns:  
-        Dictionary of cluster metrics.
-
-        **visualise_metrics(clusters_metrics):**  
-        Description: Visualizes the computed metrics for each cluster by creating bar charts or other visualizations.  
-        Parameters:  
-        - `clusters_metrics`: Dictionary of cluster metrics.
-        """)
-
-        st.subheader("rna_mutation.py")
-        st.markdown("""
-        This module contains functions for mutating RNA sequences.
-
-        **mutate_sequence(seq, mutable_positions, n_mut):**  
-        Description: Generates all possible mutated sequences applying a specific number of mutations (`n_mut`) at allowed positions (`mutable_positions`).  
-        Parameters:  
-        - `seq`: Original nucleotide sequence.  
-        - `mutable_positions`: List of zero-based positions where mutations are allowed.  
-        - `n_mut`: Exact number of mutations to apply.  
-        Returns:  
-        A generator yielding tuples containing the new mutated sequence and a list of applied mutations.
-        """)
-
-        st.subheader("rna_structures.py")
-        st.markdown("""
-        This module provides utility functions for working with RNA structures.
-
-        **get_pairing_dict(structure):**  
-        Description: Parses an RNA secondary structure in dot-bracket notation and returns a dictionary mapping each paired base index to its partner's index.  
-        Parameters:  
-        - `structure`: RNA secondary structure in dot-bracket notation.  
-        Returns:  
-        A dictionary of base pairs.
-        """)
-
-        st.subheader("search.py")
-        st.markdown("""
-        This module includes functions to evaluate structures and pairings.
-
-        **count_rna1_rna3_pairings(struct, rna1, rna3, linker):**  
-        Description: Counts the number of base pairs formed between rna1 and rna3 segments within a full secondary structure. This helps evaluate unwanted interactions.  
-        Parameters:  
-        - `struct`: Dot-bracket string of the full structure.  
-        - `rna1`, `rna3`, `linker`: Sequences of the segments.  
-        Returns:  
-        Total number of base pairs formed between rna1 and rna3.
-
-        **check_rna1_structure_preserved(rna1, linker, rna3, structure_constrained, structure_rna1):**  
-        Description: Calculates the number of differences between the original rna1 structure and the predicted rna1 substructure when part of the full constrained construct. Checks if rna1 segment maintains its desired structure in the "ON" state.  
-        Parameters:  
-        - `rna1`, `linker`, `rna3`: Sequences of the segments.  
-        - `structure_constrained`: Dot-bracket string of the full structure with constraint.  
-        - `structure_rna1`: Original dot-bracket structure of just the rna1 segment.  
-        Returns:  
-        Number of differing characters between the two structures.
-        """)
-
-        st.subheader("structure.py")
-        st.markdown("""
-        This module focuses on RNA secondary structure prediction.
-
-        **predict_secundary_structure(sequence):**  
-        Description: Predicts the minimum free energy (MFE) secondary structure of an RNA sequence using ViennaRNA's RNA.fold function.  
-        Parameters:  
-        - `sequence`: RNA nucleotide sequence as a string.  
-        Returns:  
-        A tuple containing the predicted secondary structure in dot-bracket notation and the MFE in kcal/mol.
-        """)
-
-        st.subheader("visualisation.py")
-        st.markdown("""
-        This module handles visualization of RNA structures.
-
-        **generate_rnaplot_with_colours(sequence, secundary_structure, groups, tag='conservation', output_dir='outputs'):**  
-        Description: Generates a plot of the RNA secondary structure with specific positions colored according to predefined conservation categories. Uses ViennaRNA's RNAplot tool.  
-        Parameters:  
-        - `sequence`: RNA nucleotide sequence.  
-        - `secundary_structure`: Dot-bracket notation of the structure.  
-        - `groups`: A dictionary where keys are category names and values are lists of 1-based nucleotide indices belonging to that category.  
-        - `tag`: Prefix for output filenames.  
-        - `output_dir`: Directory to save output files.  
-        Returns:  
-        A PIL image object of the generated PNG plot, or None if failed.
-        """)
+            We extend special thanks to the developers of ViennaRNA, SBOL, and the open-source community for providing the foundational tools and libraries that made this project possible.
         
-
+        """,
+            unsafe_allow_html=True
+        )
 # ---------------- MAIN APPLICATION LAYOUT ----------------
 
 #Header

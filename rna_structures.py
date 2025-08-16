@@ -57,7 +57,7 @@ def get_base_pairs(structure):
 
 def get_pair_table(struct):
     """
-    Generates a ViennaRNA pairing table from a dot-bracket secondary structure string.
+    Generates a pairing table from a dot-bracket secondary structure string.
 
     A pairing table is an array where `ptable[i]` contains the 1-based index of the
     base paired with `i` (if `i` is 1-based) or 0 if `i` is unpaired. This is a

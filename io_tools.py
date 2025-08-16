@@ -9,15 +9,46 @@ import io
 def create_zip_archive(source_dir):
     """
     Comprime un directorio completo en un archivo ZIP y devuelve el contenido binario.
+    
+    Compresses an entire directory into a ZIP archive and returns its binary content.
+    This is useful for creating a compressed file in memory without saving it to disk,
+    allowing it to be sent directly, for example, as part of a web response.
+
+    :param source_dir: The path to the directory to be compressed. (str)
+    :return: The binary content of the created ZIP archive. (bytes)
     """
+    # Create an in-memory buffer to hold the ZIP file content.
     buffer = io.BytesIO()
+    
+    # Use a ZipFile object with a 'write' ('w') mode and DEFLATED compression.
+    # The 'with' statement ensures the ZIP file is properly closed.
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # Walk through the source directory and its subdirectories.
+        # os.walk() generates the file names in a directory tree by walking the tree.
         for root, dirs, files in os.walk(source_dir):
+            # Iterate over each file found in the current directory.
             for file in files:
-                zipf.write(os.path.join(root, file),
-                           os.path.relpath(os.path.join(root, file),
-                                           os.path.join(source_dir, '..')))
+                # Construct the full path of the file to be added to the ZIP.
+                full_path = os.path.join(root, file)
+                
+                # Determine the relative path of the file inside the ZIP archive.
+                # os.path.relpath() calculates the path relative to the starting point,
+                # which in this case is the parent directory of the source_dir.
+                # This prevents the full path from being included in the archive.
+                relative_path = os.path.relpath(
+                    full_path,
+                    os.path.join(source_dir, '..')
+                )
+                
+                # Write the file to the ZIP archive using its full path for the source
+                # and its relative path for the name inside the archive.
+                zipf.write(full_path, relative_path)
+    
+    # Rewind the buffer's cursor to the beginning (position 0)
+    # so that the full content can be read.
     buffer.seek(0)
+    
+    # Return the entire content of the buffer as a bytes object.
     return buffer.getvalue()
 
 def save_and_plot_structures(seq, structure_unconstr, structure_constr,

@@ -82,3 +82,5 @@ def adjust_range_structure(structure: str) -> str:
         # More logic here with similar boundary checks if needed for other indices (e.g., i-1, i+2)
 
     return "".join(structure_ready) # Join the list back into a string
+
+

@@ -4,31 +4,12 @@ import copy
 import os
 
 # Import functions from your existing modules
-from rna_structures import get_pairing_dict, constrained_mfe, get_base_pairs
+from rna_structures import get_pairing_dict, constrained_mfe, get_pair_table
 from io_tools import save_and_plot_structures
 from rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, compute_metrics, visualise_metrics
 from search import count_rna1_rna3_pairings, check_rna1_structure_preserved
 
 import search # Import the whole module to access its functions
-
-def get_pair_table(struct):
-    """
-    Generates a pairing table for a given RNA secondary structure.
-
-    This function takes an RNA secondary structure represented in dot-bracket notation
-    and returns a pairing table. The pairing table is an array where `ptable[i]`
-    stores the 1-based index of the nucleotide that position `i` (also 1-based) is paired with.
-    If position `i` is unpaired, `ptable[i]` will be 0. This table is useful for
-    quickly querying base-pairing partners within a structure.
-
-    :param struct: An RNA secondary structure string in dot-bracket notation (e.g., "((.))") (str).
-
-    :returns: A list (or array) representing the pairing table. The list is 1-indexed,
-              meaning `ptable[0]` is unused, and `ptable[i]` corresponds to the pairing
-              partner of the i-th base (1-based index) in the input structure. (list of int)
-    """
-    return RNA.ptable(struct)
-
 
 
 def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, mutable_positions_rna1, struct1_orig):
@@ -108,7 +89,7 @@ def initialize_population(rna1_orig, rna3_orig, linker_length, population_size, 
             'seq': full_seq,
             'rna1_mutated': mutated_rna1_seq, # The SRE sequence with applied mutations
             'linker': linker_seq,
-            'rna3': rna3_orig, # rna3 original, not mutated
+            'rna3': rna3_orig, # rna3 (aptamer) original, not mutated
             'rna1_mutations_info': mutations_info # Information about the mutations in SRE
         }
         population.append(individual)

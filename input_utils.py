@@ -59,6 +59,8 @@ def parse_fasta_msa(uploaded_file):
 
 def get_msa_input():
     """
+    This function is Not used on the Tadpole Software, it is to be used by developers that want to run 
+    the code by terminal instead of the Tadpole interface, when building upon it, for example.
     Prompts the user to enter Multiple Sequence Alignment (MSA) sequences in FASTA format
     via the console and parses them.
 
@@ -80,15 +82,5 @@ def get_msa_input():
     msa = [seq.split()[1] for seq in sequences]
     return msa
 
-def get_msa_name():
-    """
-    Prompts the user to enter a name for the Multiple Sequence Alignment (MSA).
 
-    This function simply asks the user for a textual name to identify the MSA
-    and captures their input from the console.
 
-    :returns: A string representing the name entered by the user for the MSA (str).
-    """
-    print("Enter the name of your MSA:")
-    msa_name = input("Enter name: ").strip()
-    return msa_name
