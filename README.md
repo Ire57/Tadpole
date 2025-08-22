@@ -16,11 +16,49 @@ In short, you input your Structural RNA Element (SRE) and Aptamer, and the tool 
 
 For a direct and user-friendly experience, TADPOLE is deployed as a web application. Use the tool online with no installation required at: [https://toolkit-m4g6.onrender.com](https://toolkit-m4g6.onrender.com)
 
+
 ### Local Installation (For Developers)
 
-For those who want to expand the code, the following instructions explain how to set up the project locally using Docker.
+#### Option 1: Package
+For those who want to expand the code or run it locally.
+
+#### Requirements
+
+* **Python 3.8+**: The project requires a recent version of Python.
+* **Ghostscript**: This is needed for structure visualisation.
+
+#### Steps
+
+1.  **Clone the repository**:
+    ```bash
+    git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
+    ```
+
+2.  **Install Ghostscript** (Required for visualization):
+    ```bash
+    sudo apt-get update && sudo apt-get install -y ghostscript
+    ```
+
+3.  **Set up a virtual environment** (recommended):
+    ```bash
+    python3 -m venv venv_tadpole
+    source venv_tadpole/bin/activate
+    ```
+
+4.  **Install dependencies and the package**:
+    Make sure you are in the directory that contains `setup.py` and `requirements.txt`.
+    ```bash
+    pip install -r requirements.txt
+    pip install .
+    ```
+
+Now, the `tadpole` package is installed locally and you can use its modules and the CLI.
 
 ---
+#### Option 2: Docker Usage (Advanced)
+
+For users who prefer a containerised, isolated environment.
+
 
 ### Installation
 
@@ -31,7 +69,7 @@ For those who want to expand the code, the following instructions explain how to
 
 #### Steps
 
-1.  **Open terminal and clone the repository** in your desired folder.
+1.  **Open a terminal and clone the repository** in your desired folder.
     ```bash
     git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
     ```
@@ -117,6 +155,24 @@ For those who want to expand the code, the following instructions explain how to
             ```
     The last two steps can also be done using Docker Desktop.
 
+
+### API Usage (Limited)
+
+To interact with TADPOLE's core functionality through a REST API.
+
+1.  **Start the API server**:
+    In the first terminal, navigate to the project directory and run the API script.
+    ```bash
+    python api_example.py
+    ```
+    This will start the development server at `http://127.0.0.1:5000`.
+
+2.  **Test the API endpoints**:
+    In a second terminal, run the test script to send requests to the endpoints.
+    ```bash
+    python test_api.py
+    ```
+    This will test the structure prediction, genetic algorithm, and linker search endpoints, and display the responses in your terminal.
 ---
 
 ## Core Methodology
