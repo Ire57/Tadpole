@@ -35,7 +35,7 @@ For those who want to expand the code, the following instructions explain how to
     ```bash
     git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
     ```
-    ![Image showing how to clone the repository with Docker Desktop open.](images/docker/1.png)
+    ![Image showing how to clone the repository with Docker Desktop open.](tadpole_package/images/docker/1.png)
 
 2.  **Navigate to the folder** with the `Dockerfile`.
     ```bash
@@ -58,40 +58,40 @@ For those who want to expand the code, the following instructions explain how to
     ```
     When using Windows, confirm that Docker is integrated with WSL by checking `Docker Desktop → Settings → Resources → WSL Integration`. Make sure this is checked:
 
-    ![Image showing the "Enable integration with my default WSL distro" checkbox.](images/docker/2.png)
+    ![Image showing the "Enable integration with my default WSL distro" checkbox.](tadpole_package/images/docker/2.png)
 
     For further confirmation, it should appear this when opening the Resources tab:
 
-    ![Image showing the "Resources" tab in Docker Desktop.](images/docker/3.png)
+    ![Image showing the "Resources" tab in Docker Desktop.](tadpole_package/images/docker/3.png)
 
 5.  **Build the Docker Image**:
     ```bash
     docker build -t tadpole .
     ```
     It should take some time.
-    ![Image showing the Docker image building process in the terminal.](images/docker/4.png)
+    ![Image showing the Docker image building process in the terminal.](tadpole_package/images/docker/4.png)
     Check if the image is created by using the command line:
     ```bash
     docker ps
     ```
-    ![Image showing the results of the "docker ps" command.](images/docker/5.png)
+    ![Image showing the results of the "docker ps" command.](tadpole_package/images/docker/5.png)
     Or use Docker Desktop:
-    ![Image showing the "Images" tab in Docker Desktop.](images/docker/6.png)
+    ![Image showing the "Images" tab in Docker Desktop.](tadpole_package/images/docker/6.png)
 
 6.  **Run the Container**:
     ```bash
     docker run -d -p 8501:8501 tadpole
     ```
     It is important that you only use port `8501`, as any other port will not work. You can check the status of the image and container in the Docker Desktop, Images Tab:
-    ![Image showing the running container in the Docker Desktop "Images" tab.](images/docker/7.png)
-    ![Image showing the "Containers" tab in Docker Desktop with the running container.](images/docker/8.png)
+    ![Image showing the running container in the Docker Desktop "Images" tab.](tadpole_package/images/docker/7.png)
+    ![Image showing the "Containers" tab in Docker Desktop with the running container.](tadpole_package/images/docker/8.png)
 
 7.  **Access the Application**:
     Then open a browser tab and navigate to:
     ```
     http://localhost:8501
     ```
-    ![Image showing the TADPOLE application in a web browser.](images/docker/9.png)
+    ![Image showing the TADPOLE application in a web browser.](tadpole_package/images/docker/9.png)
 
 8.  **Container Management**: Once finished, you can stop the container in Docker Desktop or by command.
     * To check running containers, look for the one with the `tadpole` image:
@@ -134,7 +134,7 @@ The design process is a multi-step pipeline based on computational and biologica
     * **OFF-state disruption**: The "OFF" state should disrupt the SRE.
     * **Base pair interactions**: Number and quality of pairings between system elements.
 * **Structural and Diversity Analysis**: Designs are clustered to identify structural families and assess diversity, helping users select unique and robust solutions.
-![Image showing a diagramm of the Core Methotology](images/main.png)
+![Image showing a diagramm of the Core Methotology](tadpole_package/images/main.png)
 ---
 
 ## Standards and Interoperability
