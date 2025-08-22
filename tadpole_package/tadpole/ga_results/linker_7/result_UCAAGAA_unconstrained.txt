@@ -1,0 +1,5 @@
+Linker = 7
+Mutaciones RNA1: [(1, 'C', 'U'), (71, 'G', 'A'), (8, 'G', 'U'), (64, 'C', 'A'), (8, 'U', 'G'), (64, 'A', 'C'), (8, 'G', 'U'), (64, 'C', 'A'), (7, 'U', 'C'), (65, 'A', 'G')]
+mfe = -39.30
+....(((((.......(((((((((((....(((((...))))).)))))))))))(((((....)))))...((((((..((((((...))))))....)))))).(((...)))))))).....
+AUCAGUGCUCGGAUGAUAACUACUGACGAAAGAGUCAUCGACUCAGUUAGUGGUUGGAUGUAGUAGCAUUAAUUCAAGAAAGUUGGUGAUACCAGCAUCGUCUUGAUGCCCUUGGCAGCACCAAAA

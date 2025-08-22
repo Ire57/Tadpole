@@ -1,0 +1,13 @@
+viennarna
+weasyprint
+Pillow
+IPython
+numpy
+scipy
+matplotlib
+biopython
+scikit-learn
+graphviz
+sbol3
+sbol-factory
+rdflib
