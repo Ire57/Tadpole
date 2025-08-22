@@ -18,8 +18,8 @@ For a direct and user-friendly experience, TADPOLE is deployed as a web applicat
 
 
 ### Local Installation (For Developers)
-
-#### Option 1: Package
+---
+### Option 1: Package
 For those who want to expand the code or run it locally.
 
 #### Requirements
@@ -55,7 +55,7 @@ For those who want to expand the code or run it locally.
 Now, the `tadpole` package is installed locally and you can use its modules and the CLI.
 
 ---
-#### Option 2: Docker Usage (Advanced)
+### Option 2: Docker Usage (Advanced)
 
 For users who prefer a containerised, isolated environment.
 
@@ -154,7 +154,7 @@ For users who prefer a containerised, isolated environment.
             docker rmi <image_id_or_name>
             ```
     The last two steps can also be done using Docker Desktop.
-
+---
 
 ### API Usage (Limited)
 
