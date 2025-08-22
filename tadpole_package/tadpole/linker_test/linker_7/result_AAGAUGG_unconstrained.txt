@@ -1,5 +1,0 @@
-Linker = 7
-Mutaciones RNA1: []
-mfe = -42.20
-....(.((((......(((((((((((....(((((...))))).)))))))))))(((((....)))))..((((((((.((((((...)))))).)))))))).((((...)))))))))....
-ACCAGUGUGCGGAUGAUAACUACUGACGAAAGAGUCAUCGACUCAGUUAGUGGUUGGAUGUAGUCACAUUAGUAAGAUGGAGUUGGUGAUACCAGCAUCGUCUUGAUGCCCUUGGCAGCACCAAAA
