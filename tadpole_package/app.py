@@ -35,7 +35,7 @@ from collections import defaultdict
 import base64 
 import pandas as pd # Added pandas import as it's used later for dataframes
 
-st.set_page_config(page_title="Tadpole", layout="wide", page_icon="logo.png") # Updated page title
+st.set_page_config(page_title="Tadpole", layout="wide", page_icon="images/logo.png") # Updated page title
 
 # ---------------- CUSTOM STYLES ----------------
 st.markdown("""
@@ -2662,7 +2662,7 @@ st.components.v1.html(html_content, height=350)
 
 # Sidebar for navegation
 with st.sidebar:
-    st.image("images/logo.png")
+    st.image("tadpole_package/images/logo.png")
     st.header("TADPOLE")
     selected_main_tab = st.radio(
         "Navegation",
