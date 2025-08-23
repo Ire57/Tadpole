@@ -31,7 +31,7 @@ For those who want to expand the code or run it locally.
 
 1.  **Clone the repository**:
     ```bash
-    git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
+    git clone https://gitlab.igem.org/2025/software-tools/barcelona-ub/
     ```
 
 2.  **Install Ghostscript** (Required for visualization):
