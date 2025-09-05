@@ -31,7 +31,7 @@ For those who want to expand the code or run it locally.
 
 1.  **Clone the repository**:
     ```bash
-    git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
+    git clone https://gitlab.igem.org/2025/software-tools/barcelona-ub/
     ```
 
 2.  **Install Ghostscript** (Required for visualization):
@@ -71,9 +71,9 @@ For users who prefer a containerised, isolated environment.
 
 1.  **Open a terminal and clone the repository** in your desired folder.
     ```bash
-    git clone [https://gitlab.igem.org/2025/software-tools/barcelona-ub/](https://gitlab.igem.org/2025/software-tools/barcelona-ub/)
+    git clone https://gitlab.igem.org/2025/software-tools/barcelona-ub/
     ```
-    ![Image showing how to clone the repository with Docker Desktop open.](tadpole_package/images/docker/1.png)
+   
 
 2.  **Navigate to the folder** with the `Dockerfile`.
     ```bash
@@ -85,7 +85,7 @@ For users who prefer a containerised, isolated environment.
     docker desktop
     ```
     If it is not installed, download Docker Desktop from [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/), install, and open it.
-
+ ![Image showing how to clone the repository with Docker Desktop open.](tadpole_package/images/docker/1.png)
 4.  **Check for WSL integration** if you are on Windows.
     ```bash
     wsl --version
