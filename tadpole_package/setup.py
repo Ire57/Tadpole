@@ -6,6 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         # Dependencies on requirements.txt
+        'viennarna',
         'streamlit',
         'matplotlib',
         'scikit-learn',
