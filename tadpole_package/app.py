@@ -1798,6 +1798,31 @@ def linker_finder_tab():
                 image_output_dir=folder,
                 representative_img_bases=representative_img_bases
             )
+
+
+            igem_type_iis_sites = {
+            "BbsI": ["GAAGAC", "GTCTTC"],
+            "BsaI": ["GGTCTC", "GAGACC"],
+            "BsmBI": ["CGTCTC", "GAGACG"],
+            "BspQI": ["GCTCTTC", "GAAGAGC"],
+            "BtgZI": ["GCGATG", "CATCGC"],
+            "Esp3I": ["CGTCTC", "GAGACG"], # Es la misma que BsmBI
+            "PaqCI": ["CACCTGC", "GCAGGTG"],
+            "SapI": ["GCTCTTC", "GAAGAGC"] # Es la misma que BspQI
+        }
+        
+
+            for idx, res in enumerate(results):
+                full_sequence = res['sequence']
+                for enzyme, sites in igem_type_iis_sites.items():
+                    for site in sites:
+                        if site.upper() in full_sequence.upper():
+                            st.markdown("""(f"¡WARNING, A restriction site was found 
+                                        for the enzime {enzyme} ({site}) in the sequence {res['sequence']}.")""")
+                            break  
+                st.markdown("""Restriction sites cheking completed.""")
+            
+            
             # results in a zip file
             zip_data = create_zip_archive(folder)
 
@@ -1822,17 +1847,15 @@ def linker_finder_tab():
 
             if results:
                 for index, result in enumerate(results):
-                    # Llama a la función para cada resultado y añade el componente al documento
                     merged_doc = export_single_linker(
                         doc=merged_doc,
                         result=result,
                         index=index
                     )
                 
-                # Convierte el documento completo a una cadena JSON-LD
                 sbol_bytes = merged_doc.write_string("json-ld").encode("utf-8")
             
-                # Muestra el botón de descarga solo si hay resultados
+                # Show button if there are results
                 st.download_button(
                     label="Download All Linkers as SBOL",
                     data=sbol_bytes,
@@ -1840,14 +1863,14 @@ def linker_finder_tab():
                     mime="application/ld+json"
                 )
             else:
-                st.info("No hay resultados de linkers para exportar.")
+                st.info("No results.")
 
 
 
             # 4. Limpia la carpeta temporal después de la descarga (opcional, pero recomendado)
             # Esto asegura que no se acumulen archivos innecesarios en el servidor.
-            #if os.path.exists(folder):
-            #    shutil.rmtree(folder)
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
             
             
 
