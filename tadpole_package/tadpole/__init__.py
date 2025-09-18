@@ -1,3 +1,8 @@
+from .app_functions import *
+from .app_presentation import *
+from .app_switch_design import *
+from .app_help import *
+from .app_SRE import *
 from .conservation import clasify_conservation
 from .genetic_algorithm import run_genetic_algorithm_search
 from .rna_cluster import matriz_rmsd, cluster_structures, organise_per_clusters, compute_metrics, visualise_metrics

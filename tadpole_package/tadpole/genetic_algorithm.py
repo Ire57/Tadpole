@@ -399,7 +399,7 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                       population_size=50, generations=100, linker_length=7, elitism_rate=0.1,
                       mfe_delta=0, max_pairings=5, max_structure_changes=6,
                       mutation_rate_rna1=0.02, mutation_rate_linker=0.05,
-                      tournament_size=3, verbose=True, log_func=None, check_stop_func=None):
+                      tournament_size=3, verbose=True, log_func=None, check_stop_func=None, random_seed = 42):
     """
     Implements the core Genetic Algorithm (GA) for designing optimal RNA switches.
 
@@ -438,12 +438,16 @@ def genetic_algorithm(rna1_orig, rna3_orig, struct1_orig, constraint_orig, mutab
                       This allows redirecting logs to a Streamlit app or a file. Defaults to print if None (callable, optional).
     :param check_stop_func: An optional callable function that, when invoked, should return True
                              if the genetic algorithm process needs to be halted prematurely (e.g., user interruption). Defaults to None (callable, optional).
-
+    :param random_seed: Seed for the random number generator.
     :returns: A list of dictionaries, where each dictionary represents a valid RNA switch solution
               found within the final population. Each dictionary includes the 'individual' data
               (linker, SRE mutations), its 'fitness', the 'seq_full', 'struct_unconstr', 'mfe_1',
               'struct_constr', and 'mfe_2'.
     """
+
+    if random_seed is not None:
+        random.seed(random_seed)
+        
     if log_func is None:
         log_func = print
 
@@ -619,7 +623,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
                                  verbose=True, check_stop_func=None, log_func=print,
                                  population_size=50, generations=100, linker_length_ga=7, 
                                  elitism_rate=0.1, mutation_rate_rna1=0.02,
-                                 mutation_rate_linker=0.05, tournament_size=3):
+                                 mutation_rate_linker=0.05, tournament_size=3, random_seed = 42):
     """
     Orchestrates the search for RNA switch designs using a Genetic Algorithm (GA).
 
@@ -660,6 +664,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
     :param mutation_rate_linker: The probability of a mutation occurring in the linker segment of an individual. Defaults to 0.05 (float).
     :param tournament_size: The number of individuals chosen randomly from the population for
                             tournament selection. The individual with the highest fitness among them is selected. Defaults to 3 (int).
+    :param random_seed: Seed for the random number generator.
 
     :returns: A tuple containing:
               - all_final_results (list): A list of dictionaries, where each dictionary represents a
@@ -719,7 +724,7 @@ def run_genetic_algorithm_search(rna1, rna3, struct1, constraint,
         tournament_size=tournament_size, 
         verbose=verbose,
         log_func=log_func,
-        check_stop_func=check_stop_func
+        check_stop_func=check_stop_func, random_seed=random_seed
     )
 
     if valid_solutions_from_ga:

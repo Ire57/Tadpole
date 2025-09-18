@@ -116,6 +116,7 @@ def run_ga_search():
             mutation_rate_rna1=mutation_rate_rna1,
             mutation_rate_linker=mutation_rate_linker,
             tournament_size=tournament_size,
+            random_seed=random_seed
         )
 
         # Prepare and return the response

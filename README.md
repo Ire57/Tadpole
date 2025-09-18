@@ -51,9 +51,12 @@ For those who want to expand the code or run it locally.
     pip install -r requirements.txt
     pip install .
     ```
-
+ 
 Now, the `tadpole` package is installed locally and you can use its modules and the CLI.
-
+If you just want to run the streamlit app locally, run 
+```bash
+    streamlit run app.py
+    ```
 ---
 ### Option 2: Docker Usage (Advanced)
 

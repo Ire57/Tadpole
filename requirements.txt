@@ -11,3 +11,4 @@ graphviz
 sbol3
 sbol-factory
 rdflib
+streamlit
