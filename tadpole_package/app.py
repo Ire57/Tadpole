@@ -628,7 +628,7 @@ st.components.v1.html(html_content, height=350)
 
 # Sidebar for navegation
 with st.sidebar:
-    st.image("images/logo.png")
+    st.image("tadpole_package/images/logo.png")
     st.header("TADPOLE")
     selected_main_tab = st.radio(
         "Navegation",
