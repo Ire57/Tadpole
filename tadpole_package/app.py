@@ -23,7 +23,7 @@ from collections import defaultdict
 import base64 
 import pandas as pd # Added pandas import as it's used later for dataframes
 
-st.set_page_config(page_title="Tadpole", layout="wide", page_icon="images/logo.png") # Updated page title
+st.set_page_config(page_title="Tadpole", layout="wide", page_icon="tadpole_package/images/logo.png") # Updated page title
 
 # ---------------- CUSTOM STYLES ----------------
 st.markdown("""
