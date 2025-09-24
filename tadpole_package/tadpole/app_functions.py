@@ -332,7 +332,7 @@ def build_full_html_report(
         
       </div>
     """
-    aptamer_uri = png_to_data_uri(f"images/aptamer_report.jpg")
+    aptamer_uri = png_to_data_uri(f"tadpole_package/images/aptamer_report.jpg")
     html += f"""
                     <div style="display:inline-block; margin-right:20px; vertical-align:top;">
                     <p>If you are using the default aptamer (theophillyne) the binding sites are coloured in yellow in the following image: </p>
