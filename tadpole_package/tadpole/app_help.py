@@ -62,7 +62,7 @@ def help_tab():
         # Centering image with collumns
         col1, col2, col3 = st.columns([1, 4, 1])
         with col2:
-            st.image("images/system_img.png", width=900)
+            st.image("tadpole_package/images/system_img.png", width=900)
         st.markdown("""
         **OFF state:**  
            The aptamer and the SRE are paired. This means the structure of the SRE is disrupted, and it will not perform its function; therefore, this is the OFF state.
@@ -111,7 +111,7 @@ def help_tab():
            
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/SCR.png", width=900)
+                st.image("tadpole_package/images/SCR.png", width=900)
 
             st.subheader("Secondary Structure Considerations")
             st.markdown("""
@@ -137,26 +137,26 @@ def help_tab():
             app_presentation.example_box("Stop Codon Readthrough (SCR)  \nWithout SCR, translation usually ends when the ribosome encounters a Stop Codon.")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/NoSCR.png", width=900)
+                st.image("tadpole_package/images/NoSCR.png", width=900)
 
             app_presentation.example_cont_box("However, when an SCR element is present, its structure interacts with the ribosome and makes it skip the Stop Codon, resulting in an elongated protein.")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/SCR.png", width=900)
+                st.image("tadpole_package/images/SCR.png", width=900)
 
             app_presentation.example_cont_box("To build a switch, we add an aptamer." \
             "- In the absence of ligand: the aptamer pairs with the SCR element, disrupting its structure. The ribosome stops at the stop codon, producing only protein A." \
             "")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/OFF.png", width=1200)
+                st.image("tadpole_package/images/OFF.png", width=1200)
 
             app_presentation.example_cont_box(""
             "- In the presence of ligand: the aptamer binds to it and forms its own structure, releasing the SCR to fold normally, stimulating readthrough and producing protein AB." \
             "")
             col1, col2, col3 = st.columns([1, 4, 1])
             with col2:
-                st.image("images/ON.png", width=1200)
+                st.image("tadpole_package/images/ON.png", width=1200)
 
         
         
@@ -176,7 +176,7 @@ def help_tab():
             col1, col2, col3 = st.columns([2, 4, 1])
 
             with col2:
-                st.image("images/aptamer.png", width=400)
+                st.image("tadpole_package/images/aptamer.png", width=400)
 
 
             st.write("""
@@ -198,7 +198,7 @@ def help_tab():
             col1, col2, col3 = st.columns([1, 4, 1])
 
             with col2:
-                st.image("images/aptamer3D.png", width=750)
+                st.image("tadpole_package/images/aptamer3D.png", width=750)
 
             st.subheader("Other Compatible Aptamers")
             st.write("""
@@ -245,7 +245,7 @@ def help_tab():
             """)
             
             
-            st.image("images/energies.png", width=1200)
+            st.image("tadpole_package/images/energies.png", width=1200)
 
             st.markdown("""
             The key concept is that the binding with the ligand changes the energy of the system (in the case of the theophylline aptamer, the binding energy is -9.5 kcal/mol). Therefore, the structure of the OFF state can have a different energies depending on whether the ligand is present or not.
@@ -314,7 +314,7 @@ def help_tab():
                     """)
             col1, col2, col3 = st.columns([4, 4, 1])
             with col2:
-                st.image("images/SECIS.png", width=100)
+                st.image("tadpole_package/images/SECIS.png", width=100)
             st.markdown("""  
                 It is recommended to limit mutations to non-critical nucleotides to avoid compromising function.
             """)
